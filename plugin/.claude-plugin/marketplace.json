@@ -1,6 +1,9 @@
 {
   "name": "ai-sdlc-harness-mcp",
-  "owner": { "name": "DungNV512" },
+  "description": "AI-SDLC harness plugin marketplace: a framework-agnostic Standard layer (agents, process commands, and Confluence/Jira/GitHub/Claude Code MCP integrations) plus a Stockbook (Flutter) project overlay.",
+  "owner": {
+    "name": "DungNV512"
+  },
   "plugins": [
     {
       "name": "ai-sdlc-standard",
