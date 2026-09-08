@@ -1,0 +1,27 @@
+{
+  "name": "ai-sdlc-harness-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the AI-SDLC harness POC (Stockbook). Starts with a create_confluence_page tool, built after Atlassian's own hosted Rovo MCP createConfluencePage route returned a persistent 404.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ai-sdlc-harness-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}
