@@ -1,0 +1,36 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "TEAMID.com.example.app",
+          "TEAMID.com.example.app.stg",
+          "TEAMID.com.example.app.dev"
+        ],
+        "components": [
+          {
+            "/": "/p/*",
+            "comment": "Post detail: /p/{postId}"
+          },
+          {
+            "/": "/i/*",
+            "comment": "Item detail: /i/{itemId}"
+          },
+          {
+            "/": "/u/*",
+            "comment": "User profile: /u/{handle}"
+          },
+          {
+            "/": "/t/*",
+            "comment": "Topic page: /t/{slug}"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.example.app"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ai-sdlc-stockbook-overlay",
+  "description": "Stockbook (Flutter) project overlay for the ai-sdlc-standard plugin: flutter-engineer/qa/release agents, Flutter-specific commands (scaffold-feature, implement, ship-feature, test, i18n, api-from-openapi, audit, lint, learn-from-review, and a GitLab-flavored /pr override), mobile/BLoC/clean-architecture skills, and Dart-aware git hooks (format-dart, require-test, block-generated, pre-commit/pre-push). Requires ai-sdlc-standard to also be installed.",
+  "version": "0.1.0",
+  "author": { "name": "DungNV512" }
+}

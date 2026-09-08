@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/log-agent-usage.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -sS \"${CLAUDE_PLUGIN_ROOT}\"/hooks/branch-watch.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -sS \"${CLAUDE_PLUGIN_ROOT}\"/hooks/branch-watch.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

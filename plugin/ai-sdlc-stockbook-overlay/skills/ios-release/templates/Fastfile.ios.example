@@ -1,0 +1,107 @@
+# Fastfile.ios.example — iOS lanes (reference only)
+# Actual implementation is release-engineer territory — treat as off-limits
+# for automated changes.
+# Do not commit secrets here. API key loaded from APPSTORE_CONNECT_API_KEY env var.
+#
+# Reference: https://docs.fastlane.tools/
+
+default_platform(:ios)
+
+platform :ios do
+
+  # ── Certificate management (Match + App Store Connect API key) ─────────────
+
+  lane :match_dev do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["APPSTORE_CONNECT_API_KEY"],
+    )
+    match(
+      type: "development",
+      app_identifier: ["com.example.app.dev"],
+      api_key: api_key,
+      readonly: is_ci,
+    )
+  end
+
+  lane :match_appstore do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["APPSTORE_CONNECT_API_KEY"],
+    )
+    match(
+      type: "appstore",
+      app_identifier: ["com.example.app"],
+      api_key: api_key,
+      readonly: is_ci,
+    )
+  end
+
+  # ── TestFlight internal ────────────────────────────────────────────────────
+
+  lane :testflight do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["APPSTORE_CONNECT_API_KEY"],
+    )
+    match_appstore
+    build_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: "prod",
+      configuration: "Release-prod",
+      export_method: "app-store",
+      include_symbols: true,
+      include_bitcode: false,
+    )
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      changelog: File.read("CHANGELOG.md").lines.first(10).join,
+    )
+  end
+
+  # ── External beta (requires App Store review for first external build) ─────
+
+  lane :testflight_external do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["APPSTORE_CONNECT_API_KEY"],
+    )
+    upload_to_testflight(
+      api_key: api_key,
+      distribute_external: true,
+      groups: ["Beta Testers"],
+      notify_external_testers: true,
+    )
+  end
+
+  # ── App Store production ───────────────────────────────────────────────────
+
+  lane :app_store_prod do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_content: ENV["APPSTORE_CONNECT_API_KEY"],
+    )
+    deliver(
+      api_key: api_key,
+      submit_for_review: true,
+      automatic_release: false,      # manually release after review approval
+      phased_release: true,
+      force: true,
+      metadata_path: "mobile/fastlane/metadata",
+      screenshots_path: "mobile/fastlane/screenshots",
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        export_compliance_uses_encryption: false,
+        content_rights_contains_third_party_content: false,
+      },
+    )
+  end
+
+end
