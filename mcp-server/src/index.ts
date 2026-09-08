@@ -13,6 +13,11 @@
  * reasoning documented in the plan): 3 GitHub tools, a read+create surface
  * only (create_github_pull_request, create_github_issue,
  * get_github_workflow_run_status) -- see github.ts.
+ *
+ * Phase 5: run_claude_code_command, a trigger tool that spawns a real
+ * `claude` CLI process against a target repo checkout -- see claude-code.ts
+ * for the verified (not guessed) flag mapping and execution-environment
+ * notes.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -29,6 +34,7 @@ import {
   getGitHubWorkflowRunStatus,
   loadGitHubConfigFromEnv,
 } from "./github.js";
+import { runClaudeCodeCommand } from "./claude-code.js";
 import {
   addJiraComment,
   createJiraIssue,
@@ -168,6 +174,23 @@ const GetGitHubWorkflowRunStatusInputSchema = z.object({
   owner: z.string().describe("Repository owner (user or org), e.g. 'DungNV512'."),
   repo: z.string().describe("Repository name, e.g. 'ai-sdlc-harness-mcp'."),
   runId: z.string().describe("Workflow run ID."),
+});
+
+const RunClaudeCodeCommandInputSchema = z.object({
+  cwd: z.string().describe("Absolute path to the target repo checkout Claude Code should run in."),
+  prompt: z.string().describe("The prompt or slash command to run, e.g. '/status' or '/ship-feature FR-013'."),
+  outputFormat: z.enum(["text", "json"]).optional().describe("Defaults to 'json' (parseable). 'text' returns raw output."),
+  allowedTools: z.array(z.string()).optional().describe("Tools to allow without prompting, e.g. ['Bash(git diff:*)', 'Edit']."),
+  permissionMode: z
+    .string()
+    .optional()
+    .describe("One of: default, acceptEdits, plan, auto, dontAsk, bypassPermissions, manual. Required in practice for a non-interactive run to avoid hanging on a permission prompt."),
+  bare: z
+    .boolean()
+    .optional()
+    .describe("Skip hooks/skills/commands/subagents/plugins/MCP servers/auto-memory/CLAUDE.md. Defaults to false -- the AI-SDLC harness needs these loaded."),
+  continueSession: z.boolean().optional().describe("Maps to --continue: resume the most recent session in this cwd."),
+  resumeSessionId: z.string().optional().describe("Maps to --resume <id>: resume a specific session."),
 });
 
 // ---------------------------------------------------------------------------
@@ -454,6 +477,34 @@ const tools: Record<string, ToolDef> = {
     handler: async (input) =>
       getGitHubWorkflowRunStatus(loadGitHubConfigFromEnv(), input.owner, input.repo, input.runId),
   },
+
+  run_claude_code_command: {
+    description:
+      "Trigger a headless Claude Code run (`claude -p ...`) against a target repo checkout, from " +
+      "outside the editor (e.g. from a Teams message or a CI job). Requires a `claude` CLI on PATH " +
+      "and a writable checkout at `cwd` -- this only makes sense configured on a machine that has " +
+      "both, not inside a container with no persistent checkout. Does NOT default to --bare, since " +
+      "that would skip hooks/skills/commands/subagents/plugins/MCP servers -- exactly what a " +
+      "triggered AI-SDLC harness command needs loaded. Never throws on a non-zero exit code; the " +
+      "result's exitCode/stdout/stderr let the caller distinguish 'Claude Code ran and reported a " +
+      "failure' from 'the process itself never completed'.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        cwd: { type: "string", description: "Absolute path to the target repo checkout Claude Code should run in." },
+        prompt: { type: "string", description: "The prompt or slash command to run, e.g. '/status' or '/ship-feature FR-013'." },
+        outputFormat: { type: "string", enum: ["text", "json"], description: "Defaults to 'json' (parseable). 'text' returns raw output." },
+        allowedTools: { type: "array", items: { type: "string" }, description: "Tools to allow without prompting, e.g. ['Bash(git diff:*)', 'Edit']." },
+        permissionMode: { type: "string", description: "One of: default, acceptEdits, plan, auto, dontAsk, bypassPermissions, manual." },
+        bare: { type: "boolean", description: "Skip hooks/skills/commands/subagents/plugins/MCP servers/auto-memory/CLAUDE.md. Defaults to false." },
+        continueSession: { type: "boolean", description: "Maps to --continue: resume the most recent session in this cwd." },
+        resumeSessionId: { type: "string", description: "Maps to --resume <id>: resume a specific session." },
+      },
+      required: ["cwd", "prompt"],
+    },
+    parse: (a) => RunClaudeCodeCommandInputSchema.parse(a),
+    handler: async (input) => runClaudeCodeCommand(input),
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -461,7 +512,7 @@ const tools: Record<string, ToolDef> = {
 // ---------------------------------------------------------------------------
 
 const server = new Server(
-  { name: "ai-sdlc-harness-mcp", version: "0.3.0" },
+  { name: "ai-sdlc-harness-mcp", version: "0.4.0" },
   { capabilities: { tools: {} } }
 );
 

@@ -7,8 +7,8 @@ installable Claude Code plugin (agents/commands/skills) that consumes these
 tools; this package is usable on its own from any MCP client (Claude Code,
 Claude Desktop, Cowork, or any other MCP-speaking agent).
 
-16 tools today: 1 Confluence, 12 Jira, 3 GitHub. More platforms (GitLab,
-Microsoft Teams, a Claude Code trigger tool) are planned in later phases —
+17 tools today: 1 Confluence, 12 Jira, 3 GitHub, 1 Claude Code trigger.
+More platforms (GitLab, Microsoft Teams) are planned in later phases —
 see the repo's top-level README for the roadmap.
 
 ## Why this exists
@@ -154,6 +154,57 @@ error-handling code path (`request`/`assertOk` in `src/github.ts`) but were
 **not individually live-tested** — the repo has no diverging branch to open
 a real PR against and no GitHub Actions runs yet to fetch a real status
 for. This gap is noted here rather than silently skipped.
+
+### Claude Code trigger
+
+| Tool | Notes |
+|---|---|
+| `run_claude_code_command` | Spawns a real `claude` CLI process (`claude -p "<prompt>" --output-format json`) against a target repo checkout. `cwd`, `prompt` required. `allowedTools?`, `permissionMode?`, `bare?` (default false), `continueSession?`, `resumeSessionId?`. |
+
+Triggers a headless Claude Code run from outside the editor — e.g. from a
+Teams message or a CI job. `--cwd` doesn't exist as a CLI flag; the target
+repo is selected by the spawned process's actual working directory, so
+this tool sets `cwd` on `child_process.spawn` instead.
+
+**Deliberately does not default to `--bare`.** Bare mode skips discovery
+of hooks, skills, custom commands, subagents, plugins, MCP servers, auto
+memory, and CLAUDE.md — exactly the AI-SDLC harness machinery this tool
+exists to trigger. Defaulting it on would silently run the prompt with
+none of that loaded, so it's an opt-in `bare` input instead, off by
+default. `permissionMode` / `allowedTools` are exposed as caller-supplied
+inputs rather than a hardcoded policy — required in practice for a
+non-interactive run to avoid hanging on a permission prompt with nobody to
+answer it, and the right policy depends entirely on what the caller trusts
+the triggered command to do.
+
+Never throws on a non-zero exit code — the result's
+`{exitCode, stdout, stderr}` lets the caller distinguish "Claude Code ran
+and reported a failure result" (e.g. exit 1) from "the process itself
+never completed" (e.g. a spawn failure because `claude` isn't on PATH,
+which *does* throw, since no process ever ran at all).
+
+**Execution environment**: this tool needs a real `claude` CLI on PATH and
+a writable checkout at `cwd` — it only makes sense configured on a machine
+that has both (e.g. your own Mac with Claude Code installed), never inside
+a container with no persistent checkout and no `claude` binary. It doesn't
+run inside the container this server was developed in.
+
+**Verification**: this tool could not be live-tested against a real
+`claude` CLI — this sandbox has no real install reachable (the
+`device_bash` shell's own `claude` binary is a restricted stub: `only
+claude -p "<prompt>" is supported in this environment`, not a real
+install with real flags). Instead it was verified against a mock `claude`
+script substituted onto `PATH` (a shell script that echoes a canned
+`--output-format json` response and exits with a controllable code),
+proving the spawn/arg-building/parse/error-handling logic itself is
+correct, independent of a real Claude Code install being reachable:
+confirmed all six inputs (`allowedTools`, `permissionMode`, `bare`,
+`continueSession`, `resumeSessionId`, plus the required `cwd`/`prompt`)
+map to the correct CLI args; confirmed a non-zero exit code (7) surfaces
+in the result rather than throwing; confirmed a missing `claude` binary on
+PATH throws a clear "is Claude Code installed?" error instead of hanging
+or crashing the server. This gap — no live test against a real `claude`
+CLI — is noted here rather than silently skipped.
 
 ## Known limitation
 
