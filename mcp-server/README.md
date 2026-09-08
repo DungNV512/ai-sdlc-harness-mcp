@@ -7,7 +7,7 @@ installable Claude Code plugin (agents/commands/skills) that consumes these
 tools; this package is usable on its own from any MCP client (Claude Code,
 Claude Desktop, Cowork, or any other MCP-speaking agent).
 
-13 tools today: 1 Confluence, 12 Jira. More platforms (GitLab, GitHub,
+16 tools today: 1 Confluence, 12 Jira, 3 GitHub. More platforms (GitLab,
 Microsoft Teams, a Claude Code trigger tool) are planned in later phases —
 see the repo's top-level README for the roadmap.
 
@@ -61,11 +61,14 @@ ATLASSIAN_EMAIL=you@example.com
 ATLASSIAN_API_TOKEN=...   # https://id.atlassian.com/manage-profile/security/api-tokens
 CONFLUENCE_SITE=https://your-site.atlassian.net
 JIRA_SITE=https://your-site.atlassian.net
+GITHUB_TOKEN=...          # a PAT with repo scope (fine-grained or classic)
+GITHUB_API_URL=https://api.github.com   # optional, override for GitHub Enterprise
 ```
 
 Confluence and Jira share one Atlassian identity, so `ATLASSIAN_EMAIL` /
 `ATLASSIAN_API_TOKEN` cover both tool groups. `CONFLUENCE_SITE` and
-`JIRA_SITE` are usually the same host.
+`JIRA_SITE` are usually the same host. GitHub uses a separate Bearer-token
+PAT (`GITHUB_TOKEN`), not Atlassian's Basic auth.
 
 ## Running as an MCP server
 
@@ -128,7 +131,50 @@ exactly — `add` always produces a single paragraph; `update` splits the
 input text on newlines into one ADF paragraph per line (blank lines become
 empty paragraphs).
 
+### GitHub
+
+A read+create surface only, deliberately (same "don't exceed what's asked"
+discipline as the excluded `delete_jira_issue` tool) — no delete, merge, or
+close tools. Uses GitHub's stable REST API v3 (`X-GitHub-Api-Version:
+2022-11-28`), Bearer-token PAT auth.
+
+| Tool | Endpoint | Notes |
+|---|---|---|
+| `create_github_pull_request` | `POST /repos/{owner}/{repo}/pulls` | `title`, `head`, `base`, `body?`, `draft?` |
+| `create_github_issue` | `POST /repos/{owner}/{repo}/issues` | `title`, `body?`, `labels?`, `assignees?` |
+| `get_github_workflow_run_status` | `GET /repos/{owner}/{repo}/actions/runs/{run_id}` | returns `{status, conclusion, html_url}` |
+
+**Live-tested** (unlike the Confluence/Jira tools, which are blocked by an
+egress allowlist — see below): `create_github_issue` was called end-to-end
+over real stdio JSON-RPC against the real GitHub API, creating and then
+closing [issue #2](https://github.com/DungNV512/ai-sdlc-harness-mcp/issues/2)
+on this repo itself. `create_github_pull_request` and
+`get_github_workflow_run_status` share the identical HTTP client, auth and
+error-handling code path (`request`/`assertOk` in `src/github.ts`) but were
+**not individually live-tested** — the repo has no diverging branch to open
+a real PR against and no GitHub Actions runs yet to fetch a real status
+for. This gap is noted here rather than silently skipped.
+
 ## Known limitation
+
+This server calls each platform's REST API directly over HTTPS, so it
+requires outbound network access to that platform's host
+(`*.atlassian.net` for Confluence/Jira, `api.github.com` for GitHub — or
+your `GITHUB_API_URL` override). If your network enforces an egress
+allowlist that blocks one of those hosts (as ours did for
+`*.atlassian.net` during development), every tool that talks to it will
+fail the same way plain `curl` would — that's an organization
+network-policy question, not a bug in this code.
+
+If you're running this server inside a sandboxed environment that requires
+going through an HTTP(S) proxy for all outbound traffic (`HTTPS_PROXY`/
+`HTTP_PROXY` set, direct DNS resolution failing) — as opposed to a normal
+open network — Node's built-in `fetch()` does **not** honor those proxy
+env vars by default. Set `NODE_USE_ENV_PROXY=1` in the server's
+environment to make it do so (verified during Phase 3 development: without
+it, every GitHub call failed with `EAI_AGAIN`/`fetch failed`; with it, the
+live test above succeeded). This is currently marked experimental by
+Node/undici but is the documented mechanism as of Node 22.
 
 This server calls the Atlassian Cloud REST API directly over HTTPS, so it
 requires outbound network access to your `*.atlassian.net` site. If your

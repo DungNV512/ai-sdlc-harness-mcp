@@ -6,7 +6,7 @@ around the Stockbook app project.
 This repo is planned to hold two halves:
 
 - **[`mcp-server/`](./mcp-server)** — an MCP (Model Context Protocol)
-  server exposing Confluence, Jira, and (planned) GitLab, GitHub,
+  server exposing Confluence, Jira, GitHub, and (planned) GitLab,
   Microsoft Teams, and Claude Code trigger tools. Usable from any MCP
   client (Claude Code, Claude Desktop, Cowork, or any other MCP-speaking
   agent), not just from inside one repo.
@@ -25,11 +25,11 @@ This repo is planned to hold two halves:
 |---|---|---|
 | 1 | Jira MCP tools (12) | ✅ done |
 | 1 | Confluence: `create_confluence_page` | ✅ done |
+| 3 | GitHub tools (3, read+create surface, live-tested) | ✅ done |
 | 2 | Confluence full parity (update/get/search/list spaces) | planned |
-| 3 | GitLab tools | planned |
-| 3 | GitHub tools | planned |
+| 3 | GitLab tools | deferred — same egress block as Confluence/Jira makes them unverifiable right now |
 | 4 | Microsoft Teams (`send_teams_message` via Incoming Webhook) | planned — blocked on a webhook URL |
-| 5 | Claude Code trigger tool | planned — needs `claude` CLI invocation syntax confirmed first |
+| 5 | Claude Code trigger tool | next |
 | 6 | Plugin extraction (`plugin/`, marketplace.json, Standard/Overlay split) | planned |
 
 See `mcp-server/README.md` for the tool reference and setup instructions.

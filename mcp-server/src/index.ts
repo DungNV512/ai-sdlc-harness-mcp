@@ -2,11 +2,17 @@
 /**
  * ai-sdlc-harness-mcp
  *
- * MCP server for the AI-SDLC harness POC (Stockbook project). Phase 1:
- * Confluence (create_confluence_page, built to replace the hosted Rovo MCP
- * route that returns a persistent 404) + full Jira parity (12 tools,
- * ported 1:1 from stockbookapp's bin/*.sh scripts -- see jira.ts for the
- * mapping of each tool to the script it mirrors).
+ * MCP server for the AI-SDLC harness POC (Stockbook project).
+ *
+ * Phase 1: Confluence (create_confluence_page, built to replace the hosted
+ * Rovo MCP route that returns a persistent 404) + full Jira parity (12
+ * tools, ported 1:1 from stockbookapp's bin/*.sh scripts -- see jira.ts for
+ * the mapping of each tool to the script it mirrors).
+ *
+ * Phase 3 (GitHub half only -- GitLab tools deferred, same egress-block
+ * reasoning documented in the plan): 3 GitHub tools, a read+create surface
+ * only (create_github_pull_request, create_github_issue,
+ * get_github_workflow_run_status) -- see github.ts.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -17,6 +23,12 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { createConfluencePage, loadConfigFromEnv } from "./confluence.js";
+import {
+  createGitHubIssue,
+  createGitHubPullRequest,
+  getGitHubWorkflowRunStatus,
+  loadGitHubConfigFromEnv,
+} from "./github.js";
 import {
   addJiraComment,
   createJiraIssue,
@@ -131,6 +143,31 @@ const ListJiraSprintsInputSchema = z.object({
 
 const ListJiraIssueTypesInputSchema = z.object({
   projectKey: z.string().describe("Jira project key, e.g. 'SN'."),
+});
+
+const CreateGitHubPullRequestInputSchema = z.object({
+  owner: z.string().describe("Repository owner (user or org), e.g. 'DungNV512'."),
+  repo: z.string().describe("Repository name, e.g. 'ai-sdlc-harness-mcp'."),
+  title: z.string().describe("Pull request title."),
+  head: z.string().describe("Branch to merge from (or 'owner:branch' for a cross-repo/fork PR)."),
+  base: z.string().describe("Branch to merge into, e.g. 'main'."),
+  body: z.string().optional().describe("Pull request description (Markdown)."),
+  draft: z.boolean().optional().describe("Open as a draft PR. Defaults to false."),
+});
+
+const CreateGitHubIssueInputSchema = z.object({
+  owner: z.string().describe("Repository owner (user or org), e.g. 'DungNV512'."),
+  repo: z.string().describe("Repository name, e.g. 'ai-sdlc-harness-mcp'."),
+  title: z.string().describe("Issue title."),
+  body: z.string().optional().describe("Issue body (Markdown)."),
+  labels: z.array(z.string()).optional().describe("Labels to attach."),
+  assignees: z.array(z.string()).optional().describe("GitHub usernames to assign."),
+});
+
+const GetGitHubWorkflowRunStatusInputSchema = z.object({
+  owner: z.string().describe("Repository owner (user or org), e.g. 'DungNV512'."),
+  repo: z.string().describe("Repository name, e.g. 'ai-sdlc-harness-mcp'."),
+  runId: z.string().describe("Workflow run ID."),
 });
 
 // ---------------------------------------------------------------------------
@@ -360,6 +397,63 @@ const tools: Record<string, ToolDef> = {
     parse: (a) => ListJiraIssueTypesInputSchema.parse(a),
     handler: async (input) => listJiraIssueTypes(loadJiraConfigFromEnv(), input.projectKey),
   },
+
+  create_github_pull_request: {
+    description:
+      "Create a GitHub pull request (POST /repos/{owner}/{repo}/pulls). Requires GITHUB_TOKEN " +
+      "(a PAT with repo scope) to be set in the environment.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        owner: { type: "string", description: "Repository owner (user or org), e.g. 'DungNV512'." },
+        repo: { type: "string", description: "Repository name, e.g. 'ai-sdlc-harness-mcp'." },
+        title: { type: "string", description: "Pull request title." },
+        head: { type: "string", description: "Branch to merge from (or 'owner:branch' for a cross-repo/fork PR)." },
+        base: { type: "string", description: "Branch to merge into, e.g. 'main'." },
+        body: { type: "string", description: "Pull request description (Markdown)." },
+        draft: { type: "boolean", description: "Open as a draft PR. Defaults to false." },
+      },
+      required: ["owner", "repo", "title", "head", "base"],
+    },
+    parse: (a) => CreateGitHubPullRequestInputSchema.parse(a),
+    handler: async (input) => createGitHubPullRequest(loadGitHubConfigFromEnv(), input),
+  },
+
+  create_github_issue: {
+    description: "Create a GitHub issue (POST /repos/{owner}/{repo}/issues). Requires GITHUB_TOKEN.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        owner: { type: "string", description: "Repository owner (user or org), e.g. 'DungNV512'." },
+        repo: { type: "string", description: "Repository name, e.g. 'ai-sdlc-harness-mcp'." },
+        title: { type: "string", description: "Issue title." },
+        body: { type: "string", description: "Issue body (Markdown)." },
+        labels: { type: "array", items: { type: "string" }, description: "Labels to attach." },
+        assignees: { type: "array", items: { type: "string" }, description: "GitHub usernames to assign." },
+      },
+      required: ["owner", "repo", "title"],
+    },
+    parse: (a) => CreateGitHubIssueInputSchema.parse(a),
+    handler: async (input) => createGitHubIssue(loadGitHubConfigFromEnv(), input),
+  },
+
+  get_github_workflow_run_status: {
+    description:
+      "Get a GitHub Actions workflow run's status (GET /repos/{owner}/{repo}/actions/runs/{run_id}). " +
+      "Returns { status, conclusion, html_url }. Requires GITHUB_TOKEN.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        owner: { type: "string", description: "Repository owner (user or org), e.g. 'DungNV512'." },
+        repo: { type: "string", description: "Repository name, e.g. 'ai-sdlc-harness-mcp'." },
+        runId: { type: "string", description: "Workflow run ID." },
+      },
+      required: ["owner", "repo", "runId"],
+    },
+    parse: (a) => GetGitHubWorkflowRunStatusInputSchema.parse(a),
+    handler: async (input) =>
+      getGitHubWorkflowRunStatus(loadGitHubConfigFromEnv(), input.owner, input.repo, input.runId),
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -367,7 +461,7 @@ const tools: Record<string, ToolDef> = {
 // ---------------------------------------------------------------------------
 
 const server = new Server(
-  { name: "ai-sdlc-harness-mcp", version: "0.2.0" },
+  { name: "ai-sdlc-harness-mcp", version: "0.3.0" },
   { capabilities: { tools: {} } }
 );
 
