@@ -1,6 +1,6 @@
 ---
 description: Comprehensive read-only compliance audit. Architecture + clean-code + security + a11y + i18n + tests, dispatched in parallel, synthesized into a single P0/P1/P2 report.
-argument-hint: [--scope=full|architecture|clean-code|security|a11y|i18n|tests] [--max-agents=N] [--write]
+argument-hint: "[--scope=full|architecture|clean-code|security|a11y|i18n|tests] [--max-agents=N] [--write]"
 allowed-tools: Read, Glob, Grep, Bash, Write, Task
 ---
 
