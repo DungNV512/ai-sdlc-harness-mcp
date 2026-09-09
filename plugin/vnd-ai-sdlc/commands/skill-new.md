@@ -59,6 +59,15 @@ Resolve the checkout in this order, and **stop and ask** if none apply:
 
    <What this skill is for, in a sentence or two.>
 
+   ## When to use this
+
+   - <A concrete situation, phrased the way it actually shows up.>
+
+   ## When NOT to use this
+
+   - <The neighbouring skill or command this is most likely to be confused
+     with, and which one wins.>
+
    ## Steps
 
    1. ...
@@ -67,6 +76,12 @@ Resolve the checkout in this order, and **stop and ask** if none apply:
 
    - ...
    ```
+
+   The `## When NOT to use this` section is required, not decorative.
+   Skills that overlap shadow each other silently -- the loader resolves to
+   whichever plugin installed last -- so the boundary has to be written down
+   by the author, who is the only person who currently knows it. Full field
+   rules: `docs/ai-sdlc/templates/skill.md`.
 
 5. Print the path, the branch name, and the quality bar the reviewer will
    apply (see `/skill-approve`'s checklist -- read it now, not after the PR
