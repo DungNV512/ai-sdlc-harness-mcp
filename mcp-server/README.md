@@ -51,8 +51,18 @@ parity with the existing scripts" as license to exceed it.
 
 ```bash
 npm install
-npm run build
+npm run build      # tsc -> dist/, for local runs and the dev override
+npm run bundle     # esbuild -> ../plugin/vnd-ai-sdlc/mcp-server/index.mjs
 ```
+
+`npm run bundle` produces the single self-contained file the `vnd-ai-sdlc`
+plugin ships (no `node_modules` needed at runtime), which is how installing
+that plugin is enough to get these tools with no clone or build on the
+user's side. **Re-run it and commit the regenerated bundle in the same PR
+whenever you change `src/`** — otherwise the fix is in git but not in
+anyone's session. `plugin/vnd-ai-sdlc/mcp-server/launch.mjs` prefers a built
+checkout at `$AI_SDLC_HARNESS_MCP_SERVER_DIR` when set (so you can iterate
+with just `npm run build`), and falls back to the bundle otherwise.
 
 Copy `.env.example` to `.env` and fill in:
 

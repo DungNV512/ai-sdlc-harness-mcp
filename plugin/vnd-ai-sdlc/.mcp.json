@@ -2,7 +2,7 @@
   "mcpServers": {
     "ai-sdlc-harness": {
       "command": "node",
-      "args": ["${AI_SDLC_HARNESS_MCP_SERVER_DIR}/dist/index.js"]
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/launch.mjs"]
     }
   }
 }

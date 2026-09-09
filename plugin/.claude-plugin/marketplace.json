@@ -6,14 +6,14 @@
   },
   "plugins": [
     {
-      "name": "ai-sdlc-standard",
-      "source": "./ai-sdlc-standard",
+      "name": "vnd-ai-sdlc",
+      "source": "./vnd-ai-sdlc",
       "description": "Framework-agnostic AI-SDLC harness: agents, process commands, MCP integrations (Confluence, Jira, GitHub, Claude Code trigger)."
     },
     {
-      "name": "ai-sdlc-stockbook-overlay",
-      "source": "./ai-sdlc-stockbook-overlay",
-      "description": "Stockbook (Flutter) project overlay: framework-specific agents, commands, skills and hooks. Requires ai-sdlc-standard."
+      "name": "vnd-ai-sdlc-stockbook",
+      "source": "./vnd-ai-sdlc-stockbook",
+      "description": "Stockbook (Flutter) project overlay: framework-specific agents, commands, skills and hooks. Requires vnd-ai-sdlc."
     }
   ]
 }

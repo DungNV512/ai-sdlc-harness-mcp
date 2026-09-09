@@ -1,0 +1,8 @@
+{
+  "name": "vnd-ai-sdlc",
+  "description": "VNDIRECT AI-SDLC harness, framework-agnostic layer: architect/reviewer/security agents; process commands (plan-feature, spec, adr, review, security-review, status, agent-metrics, update-memory, abort, pr); a governed skill lifecycle (skill-new, skill-submit, skill-approve, skill-sync) so teams can contribute skills through Jira+PR review and everyone picks them up; and a self-contained bundled MCP server exposing Confluence, Jira, GitHub and Claude Code trigger tools. Pair with vnd-ai-sdlc-stockbook for Flutter/GitLab specifics.",
+  "version": "0.2.0",
+  "author": {
+    "name": "DungNV512"
+  }
+}

@@ -13,15 +13,18 @@ This repo is planned to hold two halves:
 - **[`plugin/`](./plugin)** — an installable Claude Code plugin
   marketplace packaging the AI-SDLC harness itself (agents, commands,
   skills, hooks) that already runs in the `stockbookapp` repo, split into
-  a framework-agnostic **[`ai-sdlc-standard`](./plugin/ai-sdlc-standard)**
-  layer and a **[`ai-sdlc-stockbook-overlay`](./plugin/ai-sdlc-stockbook-overlay)**.
-  Its `.mcp.json` wires in `mcp-server` automatically (given an env var
-  pointing at your `mcp-server` checkout — see `plugin/README.md`), so
-  installing the plugin is enough to get the whole AI-SDLC (rules, skills,
-  commands, sub-agents, and the MCP tools) working in a fresh repo. Real-
-  installed and verified with a live Claude Code CLI this session — see
-  `plugin/README.md` for the install steps, the real bug that install
-  caught and fixed, and the known limitations it surfaced.
+  a framework-agnostic **[`vnd-ai-sdlc`](./plugin/vnd-ai-sdlc)**
+  layer and a **[`vnd-ai-sdlc-stockbook`](./plugin/vnd-ai-sdlc-stockbook)**.
+  `vnd-ai-sdlc` ships the MCP server inside itself as a self-contained
+  bundle, so installing the plugin — no clone, no `npm install`, no build —
+  is enough to get the whole AI-SDLC (rules, skills, commands, sub-agents,
+  and the MCP tools) working in a fresh repo; only credentials come from
+  your environment. It also carries a governed **skill lifecycle**
+  (`/skill-new` → `/skill-submit` → `/skill-approve` → `/skill-sync`) so a
+  skill one person writes reaches everyone else through Jira + PR review.
+  Real-installed and verified with a live Claude Code CLI — see
+  `plugin/README.md` for install steps, the bugs that real install caught,
+  and the known limitations it surfaced.
 
 ## Status
 
@@ -31,7 +34,9 @@ This repo is planned to hold two halves:
 | 1 | Confluence: `create_confluence_page` | ✅ done |
 | 3 | GitHub tools (3, read+create surface, live-tested) | ✅ done |
 | 5 | Claude Code trigger tool (`run_claude_code_command`) | ✅ done — verified against a mock CLI, not a real install |
-| 6 | Plugin extraction (`plugin/`, marketplace.json, Standard/Overlay split) | ✅ done — real-installed + verified with a live Claude Code CLI (see `plugin/README.md`) |
+| 6 | Plugin extraction (`plugin/`, marketplace.json, Standard/overlay split) | ✅ done — real-installed + verified with a live Claude Code CLI (see `plugin/README.md`) |
+| 7 | Self-contained plugin: MCP server bundled inside `vnd-ai-sdlc` + dev-override launcher | ✅ done |
+| 7 | Skill lifecycle commands (`/skill-new`, `/skill-submit`, `/skill-approve`, `/skill-sync`) with Jira + PR approval gate | ✅ done |
 | 2 | Confluence full parity (update/get/search/list spaces) | planned |
 | 3 | GitLab tools | deferred — same egress block as Confluence/Jira makes them unverifiable right now; blocks Standard's genericized `/pr` for `vcs: gitlab` |
 | 4 | Microsoft Teams (`send_teams_message` via Incoming Webhook) | planned — blocked on a webhook URL |

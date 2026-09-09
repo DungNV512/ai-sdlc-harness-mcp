@@ -1,6 +1,0 @@
-{
-  "name": "ai-sdlc-standard",
-  "description": "Framework-agnostic AI-SDLC harness: architect/reviewer/security agents, process commands (plan, spec, ADR, review, security-review, status, agent-metrics, update-memory, abort, pr), a Claude Code trigger tool, and full Confluence/Jira/GitHub MCP integrations. Extend with a project-specific overlay plugin for framework-specific rules (see ai-sdlc-stockbook-overlay for the Flutter example).",
-  "version": "0.1.0",
-  "author": { "name": "DungNV512" }
-}

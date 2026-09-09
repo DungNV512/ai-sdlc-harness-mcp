@@ -1,201 +1,173 @@
-# ai-sdlc-harness-mcp plugin marketplace
+# VND AI-SDLC plugin marketplace
 
 Two Claude Code plugins, distributed from this one marketplace:
 
-- **`ai-sdlc-standard/`** — framework-agnostic AI-SDLC harness: 3 agents
-  (`architect`, `reviewer`, `security`), 10 process commands (`abort`,
-  `adr`, `agent-metrics`, `plan-feature`, `pr`, `review`, `security-review`,
-  `spec`, `status`, `update-memory`), 1 cross-cutting skill
-  (`threat-modeling`), 3 hooks (`branch-watch.py`, `install.sh`,
-  `log-agent-usage.sh`), and a bundled `.mcp.json` that auto-wires in
-  [`../mcp-server`](../mcp-server) (Confluence, Jira, GitHub, and a Claude
-  Code trigger tool).
-- **`ai-sdlc-stockbook-overlay/`** — the Stockbook (Flutter) project
-  overlay: 3 agents (`flutter-engineer`, `qa`, `release`), 10 commands
-  (`api-from-openapi`, `audit`, `i18n`, `implement`, `learn-from-review`,
-  `lint`, `pr` — a GitLab/`glab`-flavored override of Standard's generic
-  `/pr` — `scaffold-feature`, `ship-feature`, `test`), 27 Flutter/mobile/
-  GitLab-specific skills, and 7 Dart-aware hooks. **Requires
-  `ai-sdlc-standard` to also be installed** — it does not duplicate the
+- **[`vnd-ai-sdlc/`](./vnd-ai-sdlc)** — the framework-agnostic layer, and the
+  one most teams install: 3 agents (`architect`, `reviewer`, `security`), 10
+  process commands (`abort`, `adr`, `agent-metrics`, `plan-feature`, `pr`,
+  `review`, `security-review`, `spec`, `status`, `update-memory`), 4 skill
+  lifecycle commands (`skill-new`, `skill-submit`, `skill-approve`,
+  `skill-sync` — see below), 1 cross-cutting skill (`threat-modeling`), 3
+  hooks, and a **self-contained bundled MCP server** exposing Confluence,
+  Jira, GitHub and Claude Code trigger tools.
+- **[`vnd-ai-sdlc-stockbook/`](./vnd-ai-sdlc-stockbook)** — the Stockbook
+  (Flutter) project overlay: 3 agents (`flutter-engineer`, `qa`, `release`),
+  10 commands (`api-from-openapi`, `audit`, `i18n`, `implement`,
+  `learn-from-review`, `lint`, `pr` — a GitLab/`glab`-flavored override of
+  Standard's generic `/pr` — `scaffold-feature`, `ship-feature`, `test`), 27
+  Flutter/mobile/GitLab-specific skills, and 7 Dart-aware hooks. **Requires
+  `vnd-ai-sdlc` to also be installed** — it does not duplicate the
   architect/reviewer/security agents or the process commands.
 
-Both plugins are copies of what already runs in the `stockbookapp` repo's
-own `.claude/` directory, split along one rule: if a file's content only
-makes sense for a Flutter/BLoC/GitLab project, it's in the overlay; if it
-would work unchanged for any project, it's in Standard. Every file's
-actual body was read to decide this — not just its filename or frontmatter
-description (see the commit history and the project plan doc for the
-specific corrections that reading turned up, e.g. `/implement` and
-`/ship-feature` initially looked generic from their descriptions but are
-saturated with Flutter/BLoC specifics once you read the body).
+Both are copies of what already runs in the `stockbookapp` repo's own
+`.claude/` directory, split on one rule: if a file's content only makes
+sense for a Flutter/BLoC/GitLab project it goes in the overlay; if it would
+work unchanged anywhere it goes in Standard. Every file's body was read to
+decide that — not just its filename or frontmatter (`/implement` and
+`/ship-feature` in particular read as generic from their descriptions but
+are saturated with Flutter/BLoC specifics inside).
 
 ## Install
 
 ```
 /plugin marketplace add DungNV512/ai-sdlc-harness-mcp
-/plugin install ai-sdlc-standard@ai-sdlc-harness-mcp
+/plugin install vnd-ai-sdlc@ai-sdlc-harness-mcp
 # For a Flutter project following Stockbook's conventions:
-/plugin install ai-sdlc-stockbook-overlay@ai-sdlc-harness-mcp
+/plugin install vnd-ai-sdlc-stockbook@ai-sdlc-harness-mcp
 ```
 
-Before the bundled MCP tools work:
+That is the whole install. There is **no clone, no `npm install`, no build
+step** — `vnd-ai-sdlc` ships the MCP server as a self-contained bundle
+inside the plugin (`vnd-ai-sdlc/mcp-server/index.mjs`, one file, no
+`node_modules`), so the tools work as soon as the plugin is installed.
 
-1. Clone this repo somewhere permanent (installing the plugin does **not**
-   keep a full checkout on disk — see "How plugin install actually works"
-   below for why that matters) and build the server once:
-
-   ```bash
-   git clone https://github.com/DungNV512/ai-sdlc-harness-mcp.git
-   cd ai-sdlc-harness-mcp/mcp-server && npm install && npm run build
-   ```
-
-2. Export `AI_SDLC_HARNESS_MCP_SERVER_DIR` pointing at that `mcp-server/`
-   directory, plus the credentials it needs, in your shell profile:
-
-   ```bash
-   export AI_SDLC_HARNESS_MCP_SERVER_DIR=/absolute/path/to/ai-sdlc-harness-mcp/mcp-server
-   export ATLASSIAN_EMAIL=you@example.com
-   export ATLASSIAN_API_TOKEN=...
-   export CONFLUENCE_SITE=https://your-site.atlassian.net
-   export JIRA_SITE=https://your-site.atlassian.net
-   export GITHUB_TOKEN=...
-   ```
-
-   (see [`../mcp-server/README.md`](../mcp-server/README.md) for what each
-   var is for). `ai-sdlc-standard/.mcp.json` deliberately does **not**
-   hardcode any of these — it spawns
-   `node "${AI_SDLC_HARNESS_MCP_SERVER_DIR}"/dist/index.js` and lets the
-   process inherit your shell's environment, so no secret ever lives in a
-   file this marketplace tracks in git.
-
-### How plugin install actually works (verified by actually doing it)
-
-The first version of this doc assumed `${CLAUDE_PLUGIN_ROOT}/../../mcp-server/dist/index.js`
-would work, on the theory that installing the plugin keeps this whole repo
-checked out as one unit, so the plugin could reach its sibling `mcp-server/`
-directory by relative path. **That assumption was wrong, and a real
-`/plugin install` test caught it**: Claude Code copies each plugin into its
-own isolated cache directory
-(`~/.claude/plugins/cache/<marketplace>/<plugin-name>/<version>/`), with no
-`mcp-server/` sibling anywhere nearby — the relative path resolved to a file
-that doesn't exist, so the MCP server never started, silently. That's why
-step 1/2 above ask you to keep your own separate clone and point at it with
-an env var instead of relying on install-time layout.
-
-## The `/pr` split, as a worked example of the Standard/Overlay boundary
-
-## The `/pr` split, as a worked example of the Standard/Overlay boundary
-
-`ai-sdlc-standard/commands/pr.md` is genericized: it reads a `vcs`
-setting (`github`/`gitlab`) and calls the matching MCP tool
-(`create_github_pull_request` today; a `create_gitlab_merge_request` tool
-is not built yet — see the top-level README's roadmap). Because Stockbook
-is GitLab-hosted and that tool doesn't exist yet,
-`ai-sdlc-stockbook-overlay/commands/pr.md` is a same-named override
-carrying the original `glab`-CLI-based flow verbatim. Claude Code resolves
-a command name to the last-installed plugin that defines it, so installing
-both plugins for a Stockbook-like GitLab project gets you the working
-overlay version; installing only Standard for a GitHub project gets you
-the generic one.
-
-## Contributing a new skill, agent, command, or hook
-
-Tested for real (not assumed) by adding a throwaway skill to a local clone,
-pushing the change to the marketplace source, and running the exact update
-commands a consuming project would run. Two things aren't obvious and will
-trip you up if you skip them:
-
-1. **A skill (or agent/command/hook) is a file you add to the plugin's
-   `skills/`, `agents/`, `commands/`, or `hooks/` directory in this repo —
-   nothing gets "submitted into the MCP server."** Skills and MCP tools are
-   two unrelated mechanisms in Claude Code: the MCP server
-   (`mcp-server/`) exposes callable **tools** over the MCP JSON-RPC
-   protocol (Jira/Confluence/GitHub operations, `run_claude_code_command`);
-   skills/agents/commands are **files** that Claude Code's plugin loader
-   discovers by directory convention and loads into a session's context.
-   There is no API or MCP tool for "adding a skill" — the workflow is git:
-   add the file under the right plugin, commit, push, PR, merge.
-2. **You must bump that plugin's `version` in its `.claude-plugin/plugin.json`,
-   even for a one-file addition.** Confirmed by testing: a project that
-   already has the plugin installed calls `claude plugin update
-   <plugin>@<marketplace>` to pick up changes, and that command compares
-   version strings — if the version didn't change, it reports "already at
-   the latest version" and does **not** re-sync the installed copy, even
-   though the underlying commit did change. (`claude plugin details`,
-   confusingly, reads the marketplace source directly and *does* show the
-   new file immediately — don't let that fool you into thinking consumers
-   already have it; they don't, until the version bump ships and they
-   update.) After `claude plugin update` reports success, existing Claude
-   Code sessions need a restart to pick up the change.
-
-Concrete steps to add a skill to, say, `ai-sdlc-standard`:
+The only thing left is credentials, which live in your environment and never
+in this repo. Add to your shell profile:
 
 ```bash
-mkdir -p plugin/ai-sdlc-standard/skills/my-new-skill
-# write plugin/ai-sdlc-standard/skills/my-new-skill/SKILL.md
-# bump "version" in plugin/ai-sdlc-standard/.claude-plugin/plugin.json
-git add plugin/ai-sdlc-standard/skills/my-new-skill plugin/ai-sdlc-standard/.claude-plugin/plugin.json
-git commit -m "Add my-new-skill" && git push   # PR + merge in a real team
+export ATLASSIAN_EMAIL=you@example.com
+export ATLASSIAN_API_TOKEN=...        # id.atlassian.com/manage-profile/security/api-tokens
+export CONFLUENCE_SITE=https://your-site.atlassian.net
+export JIRA_SITE=https://your-site.atlassian.net
+export GITHUB_TOKEN=...               # PAT with repo scope
 ```
 
-Consumers then run, in a project where the plugin is already installed:
+Then restart Claude Code. See [`../mcp-server/README.md`](../mcp-server/README.md)
+for what each variable is for.
 
+### Working on the MCP server itself
+
+If you are changing the server rather than just using it, set
+`AI_SDLC_HARNESS_MCP_SERVER_DIR` to a built checkout of `mcp-server/` and the
+plugin's launcher will run that instead of the bundle:
+
+```bash
+git clone https://github.com/DungNV512/ai-sdlc-harness-mcp.git
+cd ai-sdlc-harness-mcp/mcp-server && npm install && npm run build
+export AI_SDLC_HARNESS_MCP_SERVER_DIR=$PWD
 ```
-claude plugin marketplace update ai-sdlc-harness-mcp
-claude plugin update ai-sdlc-standard@ai-sdlc-harness-mcp
-```
 
-...then restart their Claude Code session.
+Edit, `npm run build`, restart the session — no re-bundling or reinstalling
+needed while iterating. When your change is ready to ship, run
+`npm run bundle` from `mcp-server/` to regenerate
+`plugin/vnd-ai-sdlc/mcp-server/index.mjs` and commit it in the same PR;
+otherwise the fix is in git but not in anyone's session. If the override is
+set but not built, the launcher says so on stderr and falls back to the
+bundle rather than failing silently.
 
-If you just want to try authoring a skill locally without touching this
-repo at all, `claude plugin new <name> --with skills` scaffolds one under
-`~/.claude/skills/<name>/`, auto-loaded for you personally on your own
-machine (a "skills-dir" plugin) — useful for prototyping before you decide
-a skill is generally useful enough to contribute back here.
+### How plugin install actually works (learned the hard way)
+
+An earlier version pointed `.mcp.json` at
+`${CLAUDE_PLUGIN_ROOT}/../../mcp-server/dist/index.js`, on the theory that
+installing a plugin keeps the whole repo checked out as one unit so the
+plugin could reach its sibling `mcp-server/` by relative path. **A real
+`/plugin install` proved that wrong**: Claude Code copies each plugin into
+its own isolated cache directory
+(`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`) with no
+`mcp-server/` anywhere nearby, so the path resolved to a file that does not
+exist and the server silently never started. Everything a plugin needs at
+runtime has to live inside that plugin's own subtree — which is why the
+bundle ships where it does.
+
+## The skill lifecycle: create → submit → approve → sync
+
+The point of this marketplace is that a skill one person writes becomes a
+skill everyone gets. Four commands in `vnd-ai-sdlc` carry that, and each one
+exists to close a specific way the naive version goes wrong:
+
+| Command | Who runs it | What it does |
+|---|---|---|
+| `/skill-new <name>` | author | Picks the right plugin (Standard vs overlay — it asks rather than guesses), checks the name is not already taken in either, cuts a `skill/<name>` branch off `main`, scaffolds `SKILL.md` with real frontmatter. Stops there; you write the content. |
+| `/skill-submit <name>` | author | Validates the frontmatter is not still a placeholder, runs `claude plugin validate`, **bumps the plugin version**, pushes the branch, opens a Jira ticket (`create_jira_issue`) and a GitHub PR (`create_github_pull_request`) cross-linked to each other. |
+| `/skill-approve <pr>` | maintainer | Runs the mechanics + content checklist (version bumped, validator clean, no name collision, description actually specific, right plugin, no secrets, bundle rebuilt if the server changed), reports PASS/FAIL with evidence, transitions the Jira ticket. **Does not merge** — a human does that. |
+| `/skill-sync` | everyone | `marketplace update` + `plugin update`, reads the output honestly (`already at the latest version` means *nothing synced*), verifies the new skill is in the inventory, and reminds you a restart is required. |
+
+Two mechanics in there are not obvious and will silently waste your work:
+
+1. **The version bump in `plugin.json` is mandatory, even for a one-file
+   skill.** `claude plugin update` compares version strings; if the version
+   did not change it reports *"already at the latest version"* and syncs
+   nothing, so a merged skill reaches nobody. Confusingly `claude plugin
+   details` *does* show the new skill immediately, because it reads the
+   marketplace source rather than the installed copy — so it looks shipped
+   when it is not. `/skill-submit` bumps it and `/skill-approve` blocks
+   without it, precisely because this is invisible otherwise.
+2. **A merge does not reach anyone's machine.** Installed plugins are cached
+   copies; each person runs `/skill-sync` and restarts. Announce merges.
+
+Skills are **files**, not something submitted through the MCP server — those
+are two unrelated mechanisms. The MCP server (`mcp-server/`) exposes
+callable *tools* over JSON-RPC; skills, commands and agents are *files* the
+plugin loader discovers by directory convention. There is no API for "adding
+a skill"; the path is git, which is what these four commands drive.
+
+To prototype a skill privately first, `claude plugin new <name> --with skills`
+scaffolds one under `~/.claude/skills/<name>/`, auto-loaded for you alone on
+your own machine. Bring it here via `/skill-new` when it is worth sharing.
+
+## The `/pr` split, as a worked example of the Standard/overlay boundary
+
+`vnd-ai-sdlc/commands/pr.md` is genericized: it reads a `vcs` setting
+(`github`/`gitlab`) and calls the matching MCP tool
+(`create_github_pull_request` today; `create_gitlab_merge_request` is not
+built yet — see the top-level README's roadmap). Because Stockbook is
+GitLab-hosted and that tool does not exist yet,
+`vnd-ai-sdlc-stockbook/commands/pr.md` is a same-named override carrying the
+original `glab`-based flow verbatim. Claude Code resolves a command name to
+the last-installed plugin that defines it, so a Stockbook machine with both
+plugins gets the working overlay version, while a GitHub project with only
+Standard gets the generic one.
 
 ## Known limitations
 
-- **GitLab tools are not built yet** (deferred, same egress-block
-  reasoning as Confluence/Jira — see the top-level README). The overlay's
-  `/pr` keeps working via `glab` directly in the meantime; Standard's
-  genericized `/pr` will only work for `vcs: gitlab` once that MCP tool
-  lands.
-- **Standard's `install.sh`/`status.md` self-test step is a no-op** unless
-  an overlay providing `.claude/hooks/_self_test.sh` is also installed
-  (guarded explicitly, not silently broken — see their light-edit notes in
-  the project plan doc).
-- **The bundled MCP server does not activate in headless (`-p`) mode**,
-  confirmed by real testing: with `AI_SDLC_HARNESS_MCP_SERVER_DIR` set
-  correctly and the plugin installed at both user and project scope, a
-  `claude -p "..."` run in that project reports zero `ai-sdlc-harness`
-  tools — tried with `--dangerously-skip-permissions` and
-  `"enableAllProjectMcpServers": true` in `.claude/settings.local.json`,
-  neither changed the result. The identical server config passed directly
-  via `--mcp-config` (bypassing the plugin loader) connects and lists all
-  17 tools correctly, so the MCP server itself is not the problem — this
-  looks like a one-time interactive approval gate for a freshly-installed
-  plugin's MCP server that headless mode has no way to satisfy, silently
-  skipping it rather than erroring. **Confirmed working in an interactive
-  Claude Code session** (start `claude` normally in a project with the
-  plugin installed and the env var set — the tools are available there).
-  If you specifically need `ai-sdlc-harness`'s tools from a headless/`-p`
-  script, use `--mcp-config` pointing at a config with the server declared
-  directly (see this repo's own test in the project plan doc for the exact
-  invocation) rather than relying on the plugin-installed path.
+- **The bundled MCP server does not activate in headless (`claude -p`)
+  mode.** Tested at user scope and project scope, with
+  `--dangerously-skip-permissions` and with
+  `"enableAllProjectMcpServers": true` — none of it helped, while the same
+  server passed directly via `--mcp-config` connects and lists all 17 tools.
+  It looks like a one-time interactive approval gate headless mode cannot
+  satisfy, and it fails closed silently. Works in an interactive session;
+  for a headless script, pass `--mcp-config` explicitly.
+- **GitLab tools are not built yet** (deferred — same org egress block as
+  Confluence/Jira). The overlay's `/pr` keeps working through `glab`
+  directly; Standard's genericized `/pr` only covers `vcs: github` until
+  that tool lands. `/skill-submit`'s Jira step is exposed to the same block
+  and says so out loud rather than skipping the ticket quietly.
+- **Standard's `install.sh`/`status.md` self-test step is a no-op** unless an
+  overlay providing `.claude/hooks/_self_test.sh` is also installed — guarded
+  explicitly rather than left to break.
 
-## Verified by actually installing this (this session, not assumed)
+## Verified by actually installing this, not by reading the schema
 
-Cloned the repo fresh, ran `claude plugin marketplace add`, `claude plugin
-install` for both plugins, and `claude plugin details` — confirmed the real
-component counts match what's in the repo: `ai-sdlc-standard` → 3 agents
-(security, architect, reviewer), 11 skills/commands (10 commands + 1 real
-skill — Claude Code's plugin loader counts commands as a kind of skill
-internally), 3 hooks (`PostToolUse`, `Stop`, `SessionStart`), 1 MCP server;
-`ai-sdlc-stockbook-overlay` → 3 agents, 37 skills/commands (27 skills + 10
-commands), 2 hooks (`PreToolUse`, `PostToolUse`), 0 MCP servers (by design
-— only Standard wires the server). This is what caught the `.mcp.json` path
-bug fixed above, and the two "Known limitations" entries above it — real
-verification found real problems the JSON-schema-only pass couldn't.
+Cloned fresh, ran `claude plugin marketplace add`, `claude plugin install`
+for both plugins, `claude plugin validate`, and `claude plugin details` —
+confirming the real inventory matches the repo: `vnd-ai-sdlc` → 3 agents,
+commands + skills, 3 hooks (`PostToolUse`, `Stop`, `SessionStart`), 1 MCP
+server; `vnd-ai-sdlc-stockbook` → 3 agents, 27 skills + 10 commands, 2 hooks
+(`PreToolUse`, `PostToolUse`), 0 MCP servers (by design — only Standard
+wires the server). That real install is what caught the `.mcp.json` path bug
+and the version-bump requirement above; the JSON-schema-only pass before it
+caught neither.
 
 ## License
 

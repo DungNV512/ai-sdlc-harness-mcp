@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --outfile=../plugin/vnd-ai-sdlc/mcp-server/index.mjs --banner:js='import{createRequire}from\"module\";const require=createRequire(import.meta.url);'"
   },
   "license": "MIT",
   "engines": {
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "esbuild": "^0.25.0"
   }
 }
