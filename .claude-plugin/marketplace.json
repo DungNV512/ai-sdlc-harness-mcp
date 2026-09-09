@@ -1,6 +1,6 @@
 {
   "name": "ai-sdlc-harness-mcp",
-  "description": "AI-SDLC harness plugin marketplace: a framework-agnostic Standard layer (agents, process commands, and Confluence/Jira/GitHub/Claude Code MCP integrations) plus a Stockbook (Flutter) project overlay.",
+  "description": "AI-SDLC harness plugin marketplace: a framework-agnostic Standard layer (discovery and delivery commands, agents, and Confluence/Jira/GitHub/GitLab/Teams/Claude Code MCP integrations) plus a Stockbook (Flutter) project overlay.",
   "owner": {
     "name": "DungNV512"
   },
@@ -8,7 +8,7 @@
     {
       "name": "vnd-ai-sdlc",
       "source": "./plugin/vnd-ai-sdlc",
-      "description": "Framework-agnostic AI-SDLC harness: agents, process commands, MCP integrations (Confluence, Jira, GitHub, Claude Code trigger)."
+      "description": "Framework-agnostic AI-SDLC harness: Stage A discovery commands and the G1 gate, delivery commands, agents, versioned artefact templates, and MCP integrations (Confluence, Jira, GitHub, GitLab, Teams, Claude Code trigger)."
     },
     {
       "name": "vnd-ai-sdlc-stockbook",

@@ -146,15 +146,20 @@ your own machine. Bring it here via `/skill-new` when it is worth sharing.
 ## The `/pr` split, as a worked example of the Standard/overlay boundary
 
 `vnd-ai-sdlc/commands/pr.md` is genericized: it reads a `vcs` setting
-(`github`/`gitlab`) and calls the matching MCP tool
-(`create_github_pull_request` today; `create_gitlab_merge_request` is not
-built yet — see the top-level README's roadmap). Because Stockbook is
-GitLab-hosted and that tool does not exist yet,
-`vnd-ai-sdlc-stockbook/commands/pr.md` is a same-named override carrying the
-original `glab`-based flow verbatim. Claude Code resolves a command name to
-the last-installed plugin that defines it, so a Stockbook machine with both
-plugins gets the working overlay version, while a GitHub project with only
-Standard gets the generic one.
+(`github`/`gitlab`) and calls the matching MCP tool —
+`create_github_pull_request` or `create_gitlab_merge_request`. Both now
+exist, so Standard's `/pr` covers both hosts.
+
+`vnd-ai-sdlc-stockbook/commands/pr.md` remains a same-named override
+carrying the original `glab`-based flow verbatim. That override started as a
+necessity and is now a preference: `glab` is live-proven against the real
+GitLab instance, whereas `create_gitlab_merge_request` has never made a real
+call from this environment (egress-blocked, see the top-level README). Until
+someone runs it against `gitlab-new.vndirect.com.vn` and confirms it, the
+overlay is the safer path for Stockbook specifically. Claude Code resolves a
+command name to the last-installed plugin that defines it, so a Stockbook
+machine with both plugins gets the overlay version, while any other project
+gets the generic one.
 
 ## Known limitations
 
@@ -162,15 +167,26 @@ Standard gets the generic one.
   mode.** Tested at user scope and project scope, with
   `--dangerously-skip-permissions` and with
   `"enableAllProjectMcpServers": true` — none of it helped, while the same
-  server passed directly via `--mcp-config` connects and lists all 17 tools.
+  server passed directly via `--mcp-config` connects and lists all tools.
   It looks like a one-time interactive approval gate headless mode cannot
   satisfy, and it fails closed silently. Works in an interactive session;
   for a headless script, pass `--mcp-config` explicitly.
-- **GitLab tools are not built yet** (deferred — same org egress block as
-  Confluence/Jira). The overlay's `/pr` keeps working through `glab`
-  directly; Standard's genericized `/pr` only covers `vcs: github` until
-  that tool lands. `/skill-submit`'s Jira step is exposed to the same block
-  and says so out loud rather than skipping the ticket quietly.
+- **GitLab, Confluence and Teams tools are built but never live-called.**
+  Every one of their hosts is refused by the org egress allowlist from the
+  environments this was developed in, so they are verified by unit tests
+  over a stubbed `fetch` and by schema smoke tests — not against the real
+  APIs. `/skill-submit`'s Jira step is exposed to the same block and says so
+  out loud rather than skipping the ticket quietly. Make one real call per
+  platform from a machine with network access before trusting them.
+- **Stage A3 has a contract but no command.** `/idea-card` (A1),
+  `/problem-canvas` (A2), `/discovery-report` (A4) and `/gate` (G1) exist;
+  the market-scan and feasibility stage is specified in `stage-a.md` and run
+  by hand. `/discovery-report` refuses to invent A3's findings when its
+  outputs are missing — it marks those sections `NOT DONE` and says the
+  report is incomplete for gate purposes.
+- **Framework stages B through O are undefined.** They are named in the
+  wider framework but no contract for them has been supplied, and nothing
+  here invents one.
 - **Standard's `install.sh`/`status.md` self-test step is a no-op** unless an
   overlay providing `.claude/hooks/_self_test.sh` is also installed — guarded
   explicitly rather than left to break.

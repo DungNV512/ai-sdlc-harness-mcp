@@ -114,9 +114,17 @@ monorepo:
 Each phase has one owner, one artefact, and one exit condition. A phase that
 cannot meet its exit condition stops the run; it does not proceed degraded.
 
+These are the delivery phases: they start from work someone has already
+decided is worth doing. What happens before that decision — discovery stages
+A0–A4 and the G1 feasibility gate — is specified in
+`docs/ai-sdlc/stage-a.md`. Work can legitimately enter at Phase 0 without
+passing through Stage A (a bug fix, a small change); work that did pass
+through it arrives with `discovery` and `gates.G1` already filled in its
+manifest.
+
 | # | Phase | Command | Artefact | Exit condition |
 |---|-------|---------|----------|----------------|
-| 0 | Intake | (manual or a bridge) | `docs/specs/<slug>/traceability.yaml` | Sources identified and current; scope written down |
+| 0 | Intake | `/plan-feature` generates it | `docs/specs/<slug>/traceability.yaml` | Sources identified and current; scope written down |
 | 1 | Plan | `/plan-feature <slug>` | `docs/specs/<slug>/plan.md` | Sub-tasks listed; open questions explicit, not guessed |
 | 2 | Spec | `/spec <slug>` | `docs/specs/<slug>/spec.md` | Behaviour specified precisely enough to write a failing test from |
 | 3 | ADR (if architectural) | `/adr <slug>` | `docs/ai-sdlc/adr/<n>-<slug>.md` | >= 2 options compared; decision and consequences recorded |
@@ -171,13 +179,97 @@ reports the break rather than filing an orphan.
 ### `docs/ai-sdlc/templates/` and the VCS PR template
 
 The artefacts at each phase boundary need a contract, or the next phase has
-to guess what it was handed. Write all four, each only if missing (or with
+to guess what it was handed. Write all of these, each only if missing (or with
 `--force`):
 
 - `docs/ai-sdlc/templates/pull-request.md` — the per-field rules
   (`vnd.ai-sdlc.pull-request/v1`).
 - `docs/ai-sdlc/templates/jira-ticket.md` — `vnd.ai-sdlc.jira-ticket/v1`.
 - `docs/ai-sdlc/templates/skill.md` — `vnd.ai-sdlc.skill/v1`.
+- `docs/ai-sdlc/templates/traceability.yaml` — `vnd.ai-sdlc.traceability/v1`.
+  **Do not skip this one.** Eleven commands read `traceability.yaml`;
+  `/plan-feature` generates each feature's copy from this schema. Without it
+  every team hand-writes the manifest, guesses different key names, and the
+  later phases fail on fields that were never there.
+- The Stage A discovery contracts, written together since they only make
+  sense as a set: `docs/ai-sdlc/templates/idea-card.md`
+  (`vnd.ai-sdlc.idea-card/v1`),
+  `docs/ai-sdlc/templates/problem-statement-canvas.md`
+  (`vnd.ai-sdlc.problem-statement-canvas/v1`), and
+  `docs/ai-sdlc/templates/discovery-report.md`
+  (`vnd.ai-sdlc.discovery-report/v1`).
+- `docs/ai-sdlc/stage-a.md` — the upstream discovery stages and the G1 gate.
+  `/idea-card`, `/problem-canvas`, `/discovery-report` and `/gate` read this
+  file **from the consuming repo**, the same way every command reads
+  `project.yml` from there. Inline the content below rather than reading it
+  from the installed plugin by path — a path relative to an installed plugin
+  is a failure waiting to happen (see the `.mcp.json` bug), and the plugin
+  ships no `docs/` directory to read from in the first place.
+
+  ```markdown
+  # Stage A — Discovery, and the G1 feasibility gate
+
+  Phases 0–8 describe delivery: they start from work someone already decided
+  was worth doing. Stage A is what happens before that decision. Work may
+  legitimately enter at Phase 0 without passing through Stage A (a bug fix, a
+  small change); work that did arrives with `discovery` and `gates.G1`
+  already filled in its `traceability.yaml`.
+
+  | Stage | Produces | Command |
+  |---|---|---|
+  | A0 Issue intake | Issue Report | infrastructure, not a command |
+  | A1 Signal normalisation | Idea Card | `/idea-card` |
+  | A2 Problem framing | Problem Statement Canvas | `/problem-canvas` |
+  | A3 Market & feasibility scan | Market Scan, Feasibility Assessment | not built |
+  | A4 Discovery synthesis | Discovery Report | `/discovery-report` |
+  | G1 Feasibility gate | Decision + minutes | `/gate G1` records it |
+
+  ## Definitions of done
+
+  - **A0** — within 3–5 working days the submitter gets exactly one of:
+    into the cycle, deferred with a reason, or merged into a tracked issue.
+    Silence is a failure of this stage.
+  - **A1** — the *observed problem* field contains none of `cần` · `nên` ·
+    `tính năng` · `build` · `làm` · `tạo` (or `need` / `should` / `feature` /
+    `build` / `make` / `create`). Each of those replaces an observation with
+    a solution, and a solution recorded as a problem is never re-examined.
+  - **A2** — one A4 page, and someone outside the project can answer after
+    reading it: whose problem is this, when does it happen, how much does it
+    hurt?
+  - **A3** — at least one advantage that is specific and defensible. "We do
+    it better" is rejected. Unverified numbers carry `[ước tính]` inline.
+  - **A4** — five sections, five pages, plus the mandatory adversarial
+    reviewer pass (logical gaps · assumptions treated as fact · the five
+    hardest questions). Longer than five pages means A2 was not sharp
+    enough; fix it upstream rather than compressing.
+
+  ## G1 — hard gate
+
+  **No AI participation.** 60 minutes, no longer. C-level decides, PM
+  presents, Tech Lead attends only if there is real technical risk. Three
+  questions: worth building against the backlog? right moment? what is the
+  advantage and will it last?
+
+  | Decision | Obliges | Recorded |
+  |---|---|---|
+  | GO | proceed to Stage B, resources allocated | `gates.G1.decision: GO` |
+  | NO-GO | archive with reason, **and tell the submitter** | `+ reason`, `+ submitter_notified` |
+  | NEED-DATA | name the data, the owner, and the return date | `+ needed_data`, `+ data_owner`, `+ return_by` |
+
+  A NEED-DATA missing any of its three fields is an abandoned idea nobody
+  has admitted to abandoning; `/gate` refuses to record one.
+
+  Recorded in two places, both required: minutes in Confluence (what a
+  person reads later) and `gates.G1` in the feature's `traceability.yaml`
+  (what the harness reads).
+
+  ## Stages B through O
+
+  Not defined. They are named in the wider framework but their contracts
+  have not been supplied, and nothing here invents them — a plausible guess
+  at a stage boundary is worse than an admitted gap, because later work gets
+  validated against it.
+  ```
 - The host-native PR template, so a person opening a PR by hand in the web
   UI gets the same shape a command would produce. **Path depends on `vcs`
   detected in step 2** — write the matching one, never both:
@@ -191,11 +283,73 @@ to guess what it was handed. Write all four, each only if missing (or with
   template was skipped because the VCS could not be determined — do not
   write a GitHub file into a GitLab repo on a coin flip.
 
-Copy the bodies from this plugin's own `docs/ai-sdlc/templates/*` as the
-reference shape, but **inline them here rather than reading them by path
-from the installed plugin** — same reason every other template in this
-command is inlined: a path relative to an installed plugin is a failure
-waiting to happen (see the `.mcp.json` bug).
+**Inline every template body rather than reading it by path from the
+installed plugin** — a path relative to an installed plugin is a failure
+waiting to happen (see the `.mcp.json` bug), and the plugin ships no `docs/`
+directory to read from.
+
+The traceability manifest shape, which `/plan-feature` generates each
+feature's copy from:
+
+```yaml
+schema: vnd.ai-sdlc.traceability/v1
+slug: <feature-slug>
+title: <one line, plain language>
+status: draft                  # draft | active | shipped | abandoned
+created: <YYYY-MM-DD>
+owner: <person accountable>
+
+sources:                       # at least one entry. NEVER empty.
+  - id: <TICKET-KEY or doc id>
+    type: jira                 # jira | confluence | issue | incident | conversation
+    title: <as it reads at the source>
+    url: <link>
+    retrieved: <YYYY-MM-DD>    # stale sources mislead; record when it was read
+
+module: <module-or-package>    # omit the key if the project has no such concept
+
+discovery:                     # omit the block entirely for work that did not
+  issue_report: PENDING — ...  # come through Stage A
+  idea_card: PENDING — ...
+  problem_statement_canvas: PENDING — ...
+  market_scan: PENDING — ...
+  feasibility_assessment: PENDING — ...
+  discovery_report: PENDING — ...
+
+gates:
+  G1:
+    decision: PENDING          # PENDING | GO | NO-GO | NEED-DATA
+    date: <YYYY-MM-DD>
+    decided_by: <who actually decided>
+    minutes: <Confluence URL>
+    # NO-GO adds: reason, submitter_notified
+    # NEED-DATA adds: needed_data, data_owner, return_by (all three)
+
+tasks:
+  - id: T1
+    summary: <what this task delivers>
+    status: todo               # todo | doing | done | dropped
+    covers: []                 # requirement ids from spec.md
+
+artefacts:
+  plan: docs/specs/<slug>/plan.md
+  spec: docs/specs/<slug>/spec.md
+  adrs: []
+  pr: PENDING — not opened yet
+
+code: []                       # - path: ...   tasks: [T1]
+tests: []                      # - path: ...   covers: [T1]
+
+evidence:
+  lint: PENDING — not run yet
+  test: PENDING — not run yet
+  security_review: PENDING — not run yet
+```
+
+Two rules the file carries: `sources` is never empty (a feature with no
+source is an orphan), and unknown is written as `PENDING — <reason>`, never
+omitted and never guessed — a missing key and a deliberately-unknown one
+must not look the same.
 
 The fixed PR body shape is:
 
@@ -217,9 +371,18 @@ Refs: <TICKET-KEY>          # or `PENDING — <reason>`, never omitted
 ```markdown
 # Feature specs
 
-One folder per task: `docs/specs/<slug>/`, holding `traceability.yaml`
-(Phase 0), `plan.md` (Phase 1), `spec.md` (Phase 2), and for audits
-`report.md`. Created by the phase commands; do not hand-author them.
+One folder per task: `docs/specs/<slug>/`, holding
+
+- `traceability.yaml` — the manifest (Phase 0). Generated by `/plan-feature`
+  from `docs/ai-sdlc/templates/traceability.yaml`, then hand-editable. It is
+  the one file that links the work back to why it exists and forward to the
+  code that implements it.
+- `plan.md` (Phase 1), `spec.md` (Phase 2), and for audits `report.md` —
+  created by the phase commands; do not hand-author these.
+- For work that came through discovery: `idea-card.md` (A1),
+  `problem-statement-canvas.md` (A2), `market-scan.md` /
+  `feasibility-assessment.md` (A3), `discovery-report.md` (A4). See
+  `docs/ai-sdlc/stage-a.md`.
 ```
 
 ### `CLAUDE.md`

@@ -1,0 +1,114 @@
+# vnd.ai-sdlc.traceability/v1
+#
+# The manifest every feature folder carries: docs/specs/<slug>/traceability.yaml.
+# It is the one file that links a piece of work back to why it exists, and
+# forward to the code that implements it and the gate that let it through.
+#
+# WHY THIS FILE HAS A SCHEMA AT ALL
+#
+# Eleven places in this harness read traceability.yaml -- /plan-feature stops
+# without it, /spec reads it, /pr copies its links into the PR body,
+# /implement resolves `module` from it, /ship-feature gates on it -- but until
+# now nothing defined its shape and nothing created it. Every team hand-wrote
+# one, guessed different key names, and then watched later commands fail on
+# fields that were never there. That is the bug this file closes. The shape is
+# now fixed and versioned, exactly like the PR, Jira and SKILL templates.
+#
+# RULES
+#
+#   - `sources` is never empty. A feature with no source is an orphan; the
+#     phase that cannot name its source stops and reports the break rather
+#     than filing one anyway (docs/ai-sdlc/integration.md, Traceability).
+#   - Unknown is written as PENDING with a reason, never omitted and never
+#     guessed. A missing key and a deliberately-unknown one must not look the
+#     same.
+#   - /plan-feature generates this file from the schema. Hand-edit it freely
+#     afterwards -- it is a manifest, not generated output that gets clobbered.
+
+schema: vnd.ai-sdlc.traceability/v1
+
+slug: <feature-slug>              # matches the docs/specs/<slug>/ folder name
+title: <one line, plain language>
+status: draft                     # draft | active | shipped | abandoned
+created: <YYYY-MM-DD>
+owner: <person accountable, not the author of the code>
+
+# ---------------------------------------------------------------------------
+# Where this work came from. At least one entry. Never empty.
+# ---------------------------------------------------------------------------
+sources:
+  - id: <TICKET-KEY or doc id>
+    type: jira                    # jira | confluence | issue | incident | conversation
+    title: <as it reads at the source>
+    url: <link>
+    retrieved: <YYYY-MM-DD>       # when it was last read; stale sources mislead
+
+# Optional. The code module or package this work lands in, when the project
+# has that concept. /implement reads it. Omit the key if it does not apply --
+# do not write "none".
+module: <module-or-package>
+
+# ---------------------------------------------------------------------------
+# Upstream discovery (Stage A). Present only for work that went through
+# discovery; omit the whole block for a bug fix or a small change that
+# entered at Phase 0. See docs/ai-sdlc/stage-a.md.
+# ---------------------------------------------------------------------------
+discovery:
+  issue_report: <Confluence URL or PENDING — reason>
+  idea_card: <Confluence URL or PENDING — reason>
+  problem_statement_canvas: <Confluence URL or PENDING — reason>
+  market_scan: <Confluence URL or PENDING — reason>
+  feasibility_assessment: <Confluence URL or PENDING — reason>
+  discovery_report: <Confluence URL or PENDING — reason>
+
+# ---------------------------------------------------------------------------
+# Gate decisions. A gate is a human decision point; nothing here is ever
+# written by an AI on its own authority -- /gate records what a human decided,
+# and refuses to record a decision with no minutes to point at.
+# ---------------------------------------------------------------------------
+gates:
+  G1:                             # Feasibility gate, end of Stage A
+    decision: PENDING             # PENDING | GO | NO-GO | NEED-DATA
+    date: <YYYY-MM-DD>
+    decided_by: <C-level name/role who actually decided>
+    minutes: <Confluence URL of the meeting record>
+    # NEED-DATA is not a soft no. It carries a contract:
+    needed_data: <what specifically, or omit>
+    data_owner: <who fetches it, or omit>
+    return_by: <YYYY-MM-DD the gate reconvenes, or omit>
+    # NO-GO carries the reason AND the acknowledgement back to the submitter:
+    reason: <why, or omit>
+    submitter_notified: <YYYY-MM-DD, or omit>
+
+# ---------------------------------------------------------------------------
+# Delivery. Task ids are local to this file (T1, T2, ...) and are what code,
+# tests and the PR body cite.
+# ---------------------------------------------------------------------------
+tasks:
+  - id: T1
+    summary: <what this task delivers>
+    status: todo                  # todo | doing | done | dropped
+    covers: []                    # requirement ids from spec.md, e.g. [FR-001]
+
+artefacts:
+  plan: docs/specs/<slug>/plan.md
+  spec: docs/specs/<slug>/spec.md
+  adrs: []                        # docs/ai-sdlc/adr/<n>-<slug>.md
+  pr: <URL once opened, else PENDING — not opened yet>
+
+# Filled in as work lands. A task marked done with nothing here is a claim
+# with no evidence behind it -- /review and /pr both treat that as a finding.
+code: []
+  # - path: src/foo/bar.ts
+  #   tasks: [T1]
+
+tests: []
+  # - path: test/foo/bar.test.ts
+  #   covers: [T1]
+
+# Checks that ran, with what they returned. "did not run" is a valid and
+# expected value; "passed" with no command behind it is not.
+evidence:
+  lint: PENDING — not run yet
+  test: PENDING — not run yet
+  security_review: PENDING — not run yet
