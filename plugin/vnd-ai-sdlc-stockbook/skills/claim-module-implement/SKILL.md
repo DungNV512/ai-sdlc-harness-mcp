@@ -15,8 +15,10 @@ single file.
 ## When to use this
 
 - Implementing one of the still-missing claim screens: S13b/S13c (beneficiary
-  account), S21b (care facility — now landed, use as a worked example), S21c
-  (document upload), S23 (photo capture), or step 4.
+  account), S21b (care facility picker), S21c (document upload), S23 (photo
+  capture), or step 4 — check `module_claim/doc/README.md`'s "Đã dựng" table
+  first, it's the single place that says what's actually built vs. still a
+  stub, and it changes independently of this skill.
 - Adding/changing a field on `Step1Fields`, `Step2Fields`, or `Step3Fields`,
   or touching `ClaimFormEngine` / `ClaimFieldValidator`.
 - Wiring a new `ClaimApi` (retrofit) call or changing `ClaimFailureMapper`.
@@ -68,11 +70,11 @@ single file.
 
 5. **Register new dependencies in the module's own `GetIt.asNewInstance()`
    container** (`lib/src/di/module_injection.dart`), never the host's
-   `GetIt.instance` and never with `injectable` codegen — the module has 5
-   registrations by design, two take runtime params (`dio`/`baseUrl`) that
-   can't be code-generated anyway, and landing in the shared container collides
-   with `configureFormDynamicDependencies()`'s `isRegistered<FormEngine>()`
-   guard.
+   `GetIt.instance` and never with `injectable` codegen — the registration
+   list is small and hand-written by design, at least two entries take
+   runtime params (`dio`/`baseUrl`) that can't be code-generated anyway, and
+   landing in the shared container collides with
+   `configureFormDynamicDependencies()`'s `isRegistered<FormEngine>()` guard.
 
 6. **New `ClaimApi` calls declare a real request/response type**, never
    `HttpResponse<dynamic>` or a raw `Map` — that's what lets a wrong-shape
