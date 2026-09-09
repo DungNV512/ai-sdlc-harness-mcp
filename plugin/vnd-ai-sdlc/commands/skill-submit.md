@@ -77,8 +77,25 @@ so an un-rebuilt bundle means the fix is in git but not in anyone's session.
    Never delete a section; fill it with `N/A — <reason>`.
 8. Link back: `update_jira_issue` to put the PR URL on the ticket, so the
    ticket is not a dead end for whoever picks up approval.
-9. Print the Jira key, the PR URL, and the exact `/skill-approve <pr-number>`
-   command for the reviewer.
+9. Request review with the `request_github_pr_reviewers` MCP tool:
+   `reviewers: [$AI_SDLC_SKILL_REVIEWER]`, defaulting to `DungNV512` (this
+   repo's maintainer) when the variable is unset. GitHub returns 422 if the
+   named reviewer is the PR's own author -- when that happens, say the
+   reviewer was **not** assigned and name who has to be asked instead. Never
+   report an assignment that GitHub refused.
+10. Notify Teams with the `send_teams_message` MCP tool, but only if
+    `TEAMS_WEBHOOK_URL` is set -- when it is not, skip silently, this is an
+    optional channel and its absence must never fail a submission:
+    - `severity: "warning"` (something is waiting on a human)
+    - `title: "Skill awaiting approval: <skill-name>"`
+    - `facts`: plugin + old->new version, Jira key, reviewer, author
+    - `actions`: "Open PR" and "Open Jira" (omit the Jira button when the
+      ref is still `JIRA-PENDING` -- a button to a ticket that does not
+      exist is worse than no button)
+    Report the notification as sent only if the tool returned ok. If it
+    threw, say the PR is open but Teams was not notified, and why.
+11. Print the Jira key, the PR URL, and the exact `/skill-approve <pr-number>`
+    command for the reviewer.
 
 ## If Jira is unreachable
 
@@ -97,3 +114,6 @@ quietly lost its compliance link is worse than a PR that says it is missing.
 - Submitting with a placeholder description or an empty body.
 - Skipping the version bump "because it is a small change".
 - Reporting success when the Jira link or the bundle rebuild did not happen.
+- Claiming a reviewer was assigned or Teams was notified when the call failed.
+- Treating a missing `TEAMS_WEBHOOK_URL` as an error: notification is optional,
+  the PR and the ticket are not.

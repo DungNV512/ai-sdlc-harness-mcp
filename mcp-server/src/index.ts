@@ -33,8 +33,10 @@ import {
   createGitHubPullRequest,
   getGitHubWorkflowRunStatus,
   loadGitHubConfigFromEnv,
+  requestGitHubPrReviewers,
 } from "./github.js";
 import { runClaudeCodeCommand } from "./claude-code.js";
+import { loadTeamsConfigFromEnv, sendTeamsMessage } from "./teams.js";
 import {
   addJiraComment,
   createJiraIssue,
@@ -159,6 +161,31 @@ const CreateGitHubPullRequestInputSchema = z.object({
   base: z.string().describe("Branch to merge into, e.g. 'main'."),
   body: z.string().optional().describe("Pull request description (Markdown)."),
   draft: z.boolean().optional().describe("Open as a draft PR. Defaults to false."),
+});
+
+const RequestGitHubPrReviewersInputSchema = z.object({
+  owner: z.string(),
+  repo: z.string(),
+  pullNumber: z.number().int().positive(),
+  reviewers: z.array(z.string()).optional(),
+  teamReviewers: z.array(z.string()).optional(),
+});
+
+const SendTeamsMessageInputSchema = z.object({
+  title: z.string().describe("Card headline, e.g. 'Skill awaiting approval'."),
+  text: z.string().describe("Body text. Markdown-lite; keep it short and put detail behind an action link."),
+  severity: z
+    .enum(["info", "success", "warning", "danger"])
+    .optional()
+    .describe("Colors the headline. Defaults to 'info'."),
+  facts: z
+    .array(z.object({ name: z.string(), value: z.string() }))
+    .optional()
+    .describe("Key/value rows rendered as a FactSet, e.g. PR number, Jira key, reviewer."),
+  actions: z
+    .array(z.object({ title: z.string(), url: z.string() }))
+    .optional()
+    .describe("Buttons that open a URL, e.g. the PR and the Jira ticket."),
 });
 
 const CreateGitHubIssueInputSchema = z.object({
@@ -504,6 +531,68 @@ const tools: Record<string, ToolDef> = {
     },
     parse: (a) => RunClaudeCodeCommandInputSchema.parse(a),
     handler: async (input) => runClaudeCodeCommand(input),
+  },
+
+  request_github_pr_reviewers: {
+    description:
+      "Request review on a GitHub pull request (POST .../pulls/{n}/requested_reviewers). Requires " +
+      "GITHUB_TOKEN. Still a create-only surface: this creates a review request; it does not " +
+      "approve, merge or close. GitHub rejects naming the PR's own author with a 422, which is " +
+      "surfaced as an error rather than swallowed -- a Teams notification must never claim a " +
+      "reviewer was assigned when they were not.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        owner: { type: "string", description: "Repository owner, e.g. 'DungNV512'." },
+        repo: { type: "string", description: "Repository name, e.g. 'ai-sdlc-harness-mcp'." },
+        pullNumber: { type: "number", description: "Pull request number." },
+        reviewers: { type: "array", items: { type: "string" }, description: "GitHub usernames to request review from." },
+        teamReviewers: { type: "array", items: { type: "string" }, description: "Org team slugs to request review from." },
+      },
+      required: ["owner", "repo", "pullNumber"],
+    },
+    parse: (a) => RequestGitHubPrReviewersInputSchema.parse(a),
+    handler: async (input) => requestGitHubPrReviewers(loadGitHubConfigFromEnv(), input),
+  },
+
+  send_teams_message: {
+    description:
+      "Post an Adaptive Card notification to a Microsoft Teams channel or chat via a Workflows " +
+      "(Power Automate) webhook. Requires TEAMS_WEBHOOK_URL. Note this targets the CURRENT Teams " +
+      "mechanism -- Microsoft retired the classic Office 365 Connector incoming webhook; the URL " +
+      "comes from Teams: More options -> Workflows -> a webhook-alert template -> Save. The URL is " +
+      "itself the credential (it carries a `sig` parameter), so it lives in an env var, is never " +
+      "committed, and is redacted before it can appear in any error returned by this tool. " +
+      "Enforces the documented 28 KB message cap up front rather than letting Teams fail opaquely.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Card headline, e.g. 'Skill awaiting approval'." },
+        text: { type: "string", description: "Body text. Keep short; put detail behind an action link." },
+        severity: { type: "string", enum: ["info", "success", "warning", "danger"], description: "Colors the headline. Defaults to 'info'." },
+        facts: {
+          type: "array",
+          description: "Key/value rows rendered as a FactSet, e.g. PR number, Jira key, reviewer.",
+          items: {
+            type: "object",
+            properties: { name: { type: "string" }, value: { type: "string" } },
+            required: ["name", "value"],
+          },
+        },
+        actions: {
+          type: "array",
+          description: "Buttons that open a URL, e.g. the PR and the Jira ticket.",
+          items: {
+            type: "object",
+            properties: { title: { type: "string" }, url: { type: "string" } },
+            required: ["title", "url"],
+          },
+        },
+      },
+      required: ["title", "text"],
+    },
+    parse: (a) => SendTeamsMessageInputSchema.parse(a),
+    handler: async (input) => sendTeamsMessage(loadTeamsConfigFromEnv(), input),
   },
 };
 

@@ -30,12 +30,27 @@ refreshed only when asked.
      already have it, or whoever merged forgot the version bump. If a
      teammate just announced a skill and you see this, say so: the fix is a
      follow-up version bump on `main`, not a retry on your side.
-4. Confirm what landed:
+4. **If step 3 said "already at the latest version", prove it.** That
+   message is ambiguous: it means "your version string equals the published
+   one", which is *not* the same as "you have everything on `main`". When a
+   version-bump was missed or lost to a race, the two diverge and the
+   message stays reassuring forever. Compare the installed copy's inventory
+   against what `main` actually contains:
+   ```bash
+   ls ~/.claude/plugins/cache/ai-sdlc-harness-mcp/<plugin>/*/skills/
+   ```
+   against the skills listed for that plugin on GitHub's `main`. If a name
+   is on `main` but not in the cache, **stop and say so**: the plugin needs
+   a follow-up version bump on `main` before anyone can receive it. No
+   amount of re-running `/skill-sync` will fix it, and telling the user to
+   retry wastes their time on a problem that is not on their machine.
+
+5. Confirm what landed:
    ```bash
    claude plugin details vnd-ai-sdlc@ai-sdlc-harness-mcp
    ```
    and check the expected skill name appears in the inventory.
-5. Tell the user plainly: **the running session does not pick this up --
+6. Tell the user plainly: **the running session does not pick this up --
    restart Claude Code.** The CLI says "Restart to apply changes" for a
    reason; skills, commands, agents and MCP servers are all resolved at
    session start.
@@ -61,6 +76,10 @@ its tools are absent after a restart, check in this order:
 ## Anti-patterns to refuse
 
 - Reporting "synced" when the output said "already at the latest version".
+- Treating "already at the latest version" as proof you are up to date
+  without the step-4 inventory check.
+- Telling a teammate to "just run it again" when the real fix is a version
+  bump on `main` that nobody has pushed yet.
 - Editing files under `~/.claude/plugins/cache/**` to force a change in --
   that is an install artifact, overwritten on the next update, and invisible
   to everyone else.
