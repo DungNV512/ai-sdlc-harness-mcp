@@ -129,3 +129,49 @@ export async function getGitHubWorkflowRunStatus(
     html_url: data.html_url,
   };
 }
+
+export interface RequestGitHubPrReviewersInput {
+  owner: string;
+  repo: string;
+  pullNumber: number;
+  reviewers?: string[];
+  teamReviewers?: string[];
+}
+
+/**
+ * POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers
+ *
+ * Deliberately still within the read+create surface this client committed
+ * to: requesting a review creates a review request, it does not approve,
+ * merge, or close anything. GitHub refuses a request naming the PR's own
+ * author (you cannot review your own PR) with a 422 -- that surfaces here
+ * as a clear assertOk failure rather than being silently swallowed, since
+ * "the reviewer was never actually assigned" is exactly the state a
+ * notification must not claim to have happened.
+ */
+export async function requestGitHubPrReviewers(
+  cfg: GitHubConfig,
+  input: RequestGitHubPrReviewersInput
+): Promise<unknown> {
+  const { owner, repo, pullNumber, reviewers, teamReviewers } = input;
+  const payload: Record<string, unknown> = {};
+  if (reviewers && reviewers.length > 0) payload.reviewers = reviewers;
+  if (teamReviewers && teamReviewers.length > 0) payload.team_reviewers = teamReviewers;
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error("requestGitHubPrReviewers needs at least one of `reviewers` or `teamReviewers`.");
+  }
+
+  const result = await request(cfg, `/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  assertOk(result, `request reviewers on ${owner}/${repo}#${pullNumber}`);
+  const data = result.data as Record<string, unknown>;
+  return {
+    number: data.number,
+    html_url: data.html_url,
+    requested_reviewers: data.requested_reviewers,
+  };
+}

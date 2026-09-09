@@ -1,7 +1,7 @@
 {
   "name": "vnd-ai-sdlc",
-  "description": "VNDIRECT AI-SDLC harness, framework-agnostic layer: /harness-init bootstraps the harness into any repo by detecting its real toolchain and layout; architect/reviewer/security agents; process commands (plan-feature, spec, adr, review, security-review, pr, status, agent-metrics, update-memory, abort); a governed skill lifecycle (skill-new, skill-submit, skill-approve, skill-sync); and a self-contained bundled MCP server exposing Confluence, Jira, GitHub and Claude Code trigger tools. Pair with vnd-ai-sdlc-stockbook for Flutter/GitLab specifics.",
-  "version": "0.3.0",
+  "description": "VNDIRECT AI-SDLC harness, framework-agnostic layer: /harness-init bootstraps the harness into any repo by detecting its real toolchain and layout; architect/reviewer/security agents; process commands (plan-feature, spec, adr, review, security-review, pr, status, agent-metrics, update-memory, abort); a governed skill lifecycle (skill-new, skill-submit, skill-approve, skill-sync); and a self-contained bundled MCP server exposing Confluence, Jira, GitHub, Microsoft Teams and Claude Code trigger tools. Pair with vnd-ai-sdlc-stockbook for Flutter/GitLab specifics.",
+  "version": "0.4.0",
   "author": {
     "name": "DungNV512"
   }
