@@ -79,6 +79,18 @@ default_branch: <branch>
 source_roots:
   - <dir>
 
+# Who reviews work in this repo. /pr requests review from these people, and
+# the Teams notification names them. List real VCS usernames, not display
+# names. Leave empty rather than guessing -- an unassigned PR is honest; a PR
+# assigned to the wrong person is not.
+maintainers: []
+
+# Optional. When TEAMS_WEBHOOK_URL is set in the environment, /pr and
+# /notify-merge post an Adaptive Card here. Absent or unset means the harness
+# simply does not notify -- it is never a failure.
+notifications:
+  teams: env:TEAMS_WEBHOOK_URL
+
 toolchain:
   package_manager: <pnpm|npm|yarn|bun|cargo|go|uv|gradle|...>
   lint: <exact command>

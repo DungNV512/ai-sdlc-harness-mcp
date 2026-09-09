@@ -18532,6 +18532,27 @@ async function getGitHubWorkflowRunStatus(cfg, owner, repo, runId) {
     html_url: data.html_url
   };
 }
+async function requestGitHubPrReviewers(cfg, input) {
+  const { owner, repo, pullNumber, reviewers, teamReviewers } = input;
+  const payload = {};
+  if (reviewers && reviewers.length > 0) payload.reviewers = reviewers;
+  if (teamReviewers && teamReviewers.length > 0) payload.team_reviewers = teamReviewers;
+  if (Object.keys(payload).length === 0) {
+    throw new Error("requestGitHubPrReviewers needs at least one of `reviewers` or `teamReviewers`.");
+  }
+  const result = await request(cfg, `/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  assertOk(result, `request reviewers on ${owner}/${repo}#${pullNumber}`);
+  const data = result.data;
+  return {
+    number: data.number,
+    html_url: data.html_url,
+    requested_reviewers: data.requested_reviewers
+  };
+}
 
 // src/claude-code.ts
 import { spawn } from "node:child_process";
@@ -18574,6 +18595,102 @@ function runClaudeCodeCommand(input) {
       resolve({ exitCode, stdout, stderr });
     });
   });
+}
+
+// src/teams.ts
+var MAX_PAYLOAD_BYTES = 28 * 1024;
+var SEVERITY_COLOR = {
+  info: "accent",
+  success: "good",
+  warning: "warning",
+  danger: "attention"
+};
+function loadTeamsConfigFromEnv() {
+  const webhookUrl = process.env.TEAMS_WEBHOOK_URL;
+  if (!webhookUrl) {
+    throw new Error(
+      "Missing required environment variable(s): TEAMS_WEBHOOK_URL. See .env.example. Create it in Teams via: channel/chat -> More options -> Workflows -> a webhook-alert template -> Save -> copy URL."
+    );
+  }
+  return { webhookUrl };
+}
+function redactWebhookUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.searchParams.has("sig")) u.searchParams.set("sig", "REDACTED");
+    return u.toString();
+  } catch {
+    return "<unparseable webhook url>";
+  }
+}
+function buildAdaptiveCardPayload(input) {
+  const severity = input.severity ?? "info";
+  const body = [
+    {
+      type: "TextBlock",
+      text: input.title,
+      weight: "Bolder",
+      size: "Medium",
+      wrap: true,
+      color: SEVERITY_COLOR[severity]
+    },
+    { type: "TextBlock", text: input.text, wrap: true }
+  ];
+  if (input.facts && input.facts.length > 0) {
+    body.push({
+      type: "FactSet",
+      facts: input.facts.map((f) => ({ title: f.name, value: f.value }))
+    });
+  }
+  const card = {
+    type: "AdaptiveCard",
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    version: "1.4",
+    body
+  };
+  if (input.actions && input.actions.length > 0) {
+    card.actions = input.actions.map((a) => ({
+      type: "Action.OpenUrl",
+      title: a.title,
+      url: a.url
+    }));
+  }
+  return {
+    type: "message",
+    attachments: [
+      { contentType: "application/vnd.microsoft.card.adaptive", content: card }
+    ]
+  };
+}
+async function sendTeamsMessage(cfg, input) {
+  const payload = buildAdaptiveCardPayload(input);
+  const serialized = JSON.stringify(payload);
+  const bytes = Buffer.byteLength(serialized, "utf8");
+  if (bytes > MAX_PAYLOAD_BYTES) {
+    throw new Error(
+      `Teams message is ${bytes} bytes, over the documented ${MAX_PAYLOAD_BYTES}-byte limit. Shorten \`text\`, or move detail behind an Action.OpenUrl link.`
+    );
+  }
+  let res;
+  try {
+    res = await fetchWithRetry(cfg.webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: serialized
+    });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Teams webhook request failed (network/timeout) for ${redactWebhookUrl(cfg.webhookUrl)}: ${reason}`
+    );
+  }
+  const body = await res.text();
+  if (!res.ok) {
+    throw new Error(
+      `Teams webhook returned HTTP ${res.status} for ${redactWebhookUrl(cfg.webhookUrl)}: ${body.slice(0, 500)}`
+    );
+  }
+  return { status: res.status, ok: true, body };
 }
 
 // src/jira.ts
@@ -18826,6 +18943,20 @@ var CreateGitHubPullRequestInputSchema = external_exports.object({
   base: external_exports.string().describe("Branch to merge into, e.g. 'main'."),
   body: external_exports.string().optional().describe("Pull request description (Markdown)."),
   draft: external_exports.boolean().optional().describe("Open as a draft PR. Defaults to false.")
+});
+var RequestGitHubPrReviewersInputSchema = external_exports.object({
+  owner: external_exports.string(),
+  repo: external_exports.string(),
+  pullNumber: external_exports.number().int().positive(),
+  reviewers: external_exports.array(external_exports.string()).optional(),
+  teamReviewers: external_exports.array(external_exports.string()).optional()
+});
+var SendTeamsMessageInputSchema = external_exports.object({
+  title: external_exports.string().describe("Card headline, e.g. 'Skill awaiting approval'."),
+  text: external_exports.string().describe("Body text. Markdown-lite; keep it short and put detail behind an action link."),
+  severity: external_exports.enum(["info", "success", "warning", "danger"]).optional().describe("Colors the headline. Defaults to 'info'."),
+  facts: external_exports.array(external_exports.object({ name: external_exports.string(), value: external_exports.string() })).optional().describe("Key/value rows rendered as a FactSet, e.g. PR number, Jira key, reviewer."),
+  actions: external_exports.array(external_exports.object({ title: external_exports.string(), url: external_exports.string() })).optional().describe("Buttons that open a URL, e.g. the PR and the Jira ticket.")
 });
 var CreateGitHubIssueInputSchema = external_exports.object({
   owner: external_exports.string().describe("Repository owner (user or org), e.g. 'DungNV512'."),
@@ -19111,6 +19242,54 @@ var tools = {
     },
     parse: (a) => RunClaudeCodeCommandInputSchema.parse(a),
     handler: async (input) => runClaudeCodeCommand(input)
+  },
+  request_github_pr_reviewers: {
+    description: "Request review on a GitHub pull request (POST .../pulls/{n}/requested_reviewers). Requires GITHUB_TOKEN. Still a create-only surface: this creates a review request; it does not approve, merge or close. GitHub rejects naming the PR's own author with a 422, which is surfaced as an error rather than swallowed -- a Teams notification must never claim a reviewer was assigned when they were not.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        owner: { type: "string", description: "Repository owner, e.g. 'DungNV512'." },
+        repo: { type: "string", description: "Repository name, e.g. 'ai-sdlc-harness-mcp'." },
+        pullNumber: { type: "number", description: "Pull request number." },
+        reviewers: { type: "array", items: { type: "string" }, description: "GitHub usernames to request review from." },
+        teamReviewers: { type: "array", items: { type: "string" }, description: "Org team slugs to request review from." }
+      },
+      required: ["owner", "repo", "pullNumber"]
+    },
+    parse: (a) => RequestGitHubPrReviewersInputSchema.parse(a),
+    handler: async (input) => requestGitHubPrReviewers(loadGitHubConfigFromEnv(), input)
+  },
+  send_teams_message: {
+    description: "Post an Adaptive Card notification to a Microsoft Teams channel or chat via a Workflows (Power Automate) webhook. Requires TEAMS_WEBHOOK_URL. Note this targets the CURRENT Teams mechanism -- Microsoft retired the classic Office 365 Connector incoming webhook; the URL comes from Teams: More options -> Workflows -> a webhook-alert template -> Save. The URL is itself the credential (it carries a `sig` parameter), so it lives in an env var, is never committed, and is redacted before it can appear in any error returned by this tool. Enforces the documented 28 KB message cap up front rather than letting Teams fail opaquely.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Card headline, e.g. 'Skill awaiting approval'." },
+        text: { type: "string", description: "Body text. Keep short; put detail behind an action link." },
+        severity: { type: "string", enum: ["info", "success", "warning", "danger"], description: "Colors the headline. Defaults to 'info'." },
+        facts: {
+          type: "array",
+          description: "Key/value rows rendered as a FactSet, e.g. PR number, Jira key, reviewer.",
+          items: {
+            type: "object",
+            properties: { name: { type: "string" }, value: { type: "string" } },
+            required: ["name", "value"]
+          }
+        },
+        actions: {
+          type: "array",
+          description: "Buttons that open a URL, e.g. the PR and the Jira ticket.",
+          items: {
+            type: "object",
+            properties: { title: { type: "string" }, url: { type: "string" } },
+            required: ["title", "url"]
+          }
+        }
+      },
+      required: ["title", "text"]
+    },
+    parse: (a) => SendTeamsMessageInputSchema.parse(a),
+    handler: async (input) => sendTeamsMessage(loadTeamsConfigFromEnv(), input)
   }
 };
 var server = new Server(
