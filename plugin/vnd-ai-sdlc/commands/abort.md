@@ -123,9 +123,11 @@ To resume:
 ## Refuse if
 
 - The current branch does not match `feat/<slug>`.
-- There are uncommitted changes outside the feature scope (anything
-  touching `.claude/`, `docs/architecture/`, `pubspec.yaml`,
-  `modules/*/pubspec.yaml`).
+- There are uncommitted changes outside the feature scope — anything
+  touching `.claude/`, `docs/ai-sdlc/`, or a project-wide manifest or
+  lockfile (the dependency manifest named by `toolchain.package_manager`
+  in `docs/ai-sdlc/project.yml`, and any per-package manifest under the
+  configured `source_roots`).
 - The user has not confirmed the branch abandonment.
 - HEAD is on `main` or `dev` — refuse, this command deletes a
   feature branch and must never be run against trunk.

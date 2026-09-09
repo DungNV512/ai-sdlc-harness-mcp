@@ -10,10 +10,11 @@ Phase 12. Pre-conditions: all earlier phases green.
 
 ## Platform
 
-Reads `.claude/settings.json`'s `vcs` field (`"github"` or `"gitlab"`) to
-decide which MCP tool to call. If `vcs` is unset, ASK the user once which
-host this project uses, and offer to write the setting so future runs
-don't ask again.
+Reads the `vcs` field (`github` or `gitlab`) from
+`docs/ai-sdlc/project.yml`, written by `/harness-init`. If that file is
+missing, stop and tell the user to run `/harness-init` first rather than
+guessing the host. If the file exists but `vcs` is unset, ASK once and offer
+to write it, so future runs don't ask again.
 
 - `vcs: github` — calls the `create_github_pull_request` MCP tool
   (`ai-sdlc-harness-mcp`'s GitHub tools, live since Phase 3).
@@ -27,7 +28,7 @@ don't ask again.
 
 ## Steps
 
-1. Read `.claude/settings.json`'s `vcs` field (see above). Stop and ask if
+1. Read `vcs` from `docs/ai-sdlc/project.yml` (see above). Stop and ask if
    unset and no overlay override is installed.
 2. If an overlay plugin defines its own `.claude/commands/pr.md`, that
    file takes precedence over this one (Claude Code resolves commands by
@@ -70,7 +71,7 @@ don't ask again.
 - Calling the wrong platform's tool because `vcs` is misconfigured —
   verify it, don't assume.
 - Merging your own PR/MR (the human-gate phase is human).
-- `git push --force` (should be denied by `settings.json`).
+- `git push --force` (should be denied by the project's permission settings).
 - Landing a PR/MR with a red pipeline or unresolved review threads.
 - Copy-pasting the whole PR/MR description into the commit body — the
   PR/MR body is the artefact, the commit is the record.
