@@ -19,7 +19,7 @@ and is overwritten on the next update.
 Resolve the checkout in this order, and **stop and ask** if none apply:
 
 1. `$AI_SDLC_HARNESS_REPO`, if set.
-2. The current working directory, if `plugin/.claude-plugin/marketplace.json`
+2. The current working directory, if `.claude-plugin/marketplace.json`
    exists at its root.
 3. Otherwise: tell the user to
    `git clone https://github.com/DungNV512/ai-sdlc-harness-mcp.git` and either
