@@ -49,19 +49,32 @@ so an un-rebuilt bundle means the fix is in git but not in anyone's session.
 
 5. Commit (`Add <skill-name> skill` or `Update <skill-name> skill`) and
    `git push -u origin skill/<skill-name>`.
-6. Create the Jira ticket with the `create_jira_issue` MCP tool:
+6. Create the Jira ticket with the `create_jira_issue` MCP tool, using
+   the **standard ticket template** (`vnd.ai-sdlc.jira-ticket/v1`, see
+   `docs/ai-sdlc/templates/jira-ticket.md`):
    - Project key: `$AI_SDLC_SKILL_JIRA_PROJECT` if set; otherwise **ask** --
      do not invent a project key.
-   - Issue type `Task`, summary `AI-SDLC skill: <skill-name>`.
-   - Description: what the skill does, which plugin it targets and why, and
-     what the author verified.
+   - Issue type `Task`; summary `[ai-sdlc-harness-mcp] <what will be true
+     when this is done>` -- an outcome, not "add skill X".
+   - Description, in this order: the link-out block (PR url / repo / branch,
+     writing "not opened yet" when the PR comes later), **Why**, **What**
+     (naming the plugin and its version transition), then **Verified** and
+     **Not verified** using the same evidence rule as the PR.
+   - The ticket must not claim more than the PR claims.
 7. Create the PR with the `create_github_pull_request` MCP tool
    (`owner: DungNV512`, `repo: ai-sdlc-harness-mcp`, `head: skill/<skill-name>`,
-   `base: main`, `draft: false`). The PR body must contain:
-   - `Refs: <JIRA-KEY>`
-   - which plugin it lands in and the one-line reason
-   - the old -> new version of that plugin
-   - what the author actually ran (validator output, any manual try-out)
+   `base: main`, `draft: false`). Use the **standard PR template**
+   (`vnd.ai-sdlc.pull-request/v1`, the same one `/pr` produces -- see
+   `docs/ai-sdlc/templates/pull-request.md`). Map the skill-specific facts
+   onto its fixed sections:
+   - `Refs:` -- the Jira key from step 6, or `PENDING — <reason>`
+   - `## What changed` -- which plugin it lands in, the one-line reason for
+     that choice, and the plugin's `old -> new` version
+   - `## Verified` -- `claude plugin validate` output, and any manual try-out
+   - `## Not verified` -- required; e.g. "not exercised on a real repo yet"
+   - `## Security note` -- for a skill, whether it reads secrets or writes
+     outside the repo; otherwise `N/A`
+   Never delete a section; fill it with `N/A — <reason>`.
 8. Link back: `update_jira_issue` to put the PR URL on the ticket, so the
    ticket is not a dead end for whoever picks up approval.
 9. Request review with the `request_github_pr_reviewers` MCP tool:

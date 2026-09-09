@@ -168,6 +168,50 @@ reports the break rather than filing an orphan.
   and stop.
 ```
 
+### `docs/ai-sdlc/templates/` and the VCS PR template
+
+The artefacts at each phase boundary need a contract, or the next phase has
+to guess what it was handed. Write all four, each only if missing (or with
+`--force`):
+
+- `docs/ai-sdlc/templates/pull-request.md` — the per-field rules
+  (`vnd.ai-sdlc.pull-request/v1`).
+- `docs/ai-sdlc/templates/jira-ticket.md` — `vnd.ai-sdlc.jira-ticket/v1`.
+- `docs/ai-sdlc/templates/skill.md` — `vnd.ai-sdlc.skill/v1`.
+- The host-native PR template, so a person opening a PR by hand in the web
+  UI gets the same shape a command would produce. **Path depends on `vcs`
+  detected in step 2** — write the matching one, never both:
+
+  | `vcs` | Path |
+  |---|---|
+  | `github` | `.github/PULL_REQUEST_TEMPLATE.md` |
+  | `gitlab` | `.gitlab/merge_request_templates/Default.md` |
+
+  If `vcs` is `UNKNOWN`, write neither, and say in the report that the host
+  template was skipped because the VCS could not be determined — do not
+  write a GitHub file into a GitLab repo on a coin flip.
+
+Copy the bodies from this plugin's own `docs/ai-sdlc/templates/*` as the
+reference shape, but **inline them here rather than reading them by path
+from the installed plugin** — same reason every other template in this
+command is inlined: a path relative to an installed plugin is a failure
+waiting to happen (see the `.mcp.json` bug).
+
+The fixed PR body shape is:
+
+```
+Refs: <TICKET-KEY>          # or `PENDING — <reason>`, never omitted
+
+## Summary
+## What changed
+## Verified                 # command + what it returned
+## Not verified             # REQUIRED; "Nothing — ..." if truly nothing
+## Risk and rollback
+## Screenshots / recording  # or "N/A — no UI change"
+## Security note            # or "N/A — no auth/network/storage touched"
+## Links
+```
+
 ### `docs/specs/README.md`
 
 ```markdown

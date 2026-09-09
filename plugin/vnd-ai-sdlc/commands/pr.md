@@ -53,15 +53,31 @@ to write it, so future runs don't ask again.
      branch), `base` (`$2`, default `main`), `body` (the filled template
      from step 7), `draft: true`.
    - GitLab: `create_gitlab_merge_request` — not yet available, see above.
-7. Fill the PR/MR body template. Every section:
-   - **Summary** — one paragraph, why this change.
-   - **Screenshots / recording** — mandatory for any UI change (per DoD).
-   - **Test plan** — checklist mapping to phase-exit items from
-     `docs/ai-sdlc/phases.md` (or the project's equivalent).
-   - **Risk & rollback** — what breaks if this is wrong; how to revert.
-   - **Linked ticket / manifest / sources / tasks / spec / ADR** — ticket
-     ref, manifest path, source/task paths, spec path, ADR filename.
-   - **Security note** — or "N/A — no auth/network/storage touched".
+7. Fill the PR/MR body using the **standard artefact template**
+   (`vnd.ai-sdlc.pull-request/v1`). This is the same shape `/skill-submit`
+   produces -- one repo must not have two PR contracts. If the repo has
+   `docs/ai-sdlc/templates/pull-request.md`, read it for the per-field rules;
+   the shape itself is fixed:
+
+   ```
+   Refs: <TICKET-KEY>          # or `PENDING — <reason>`, never omitted
+
+   ## Summary                  # one paragraph: why, not what files moved
+   ## What changed             # plugin changes state `<plugin> old -> new`
+   ## Verified                 # command + what it returned, not "tests pass"
+   ## Not verified             # REQUIRED; "Nothing — ..." if truly nothing
+   ## Risk and rollback
+   ## Screenshots / recording  # or "N/A — no UI change"
+   ## Security note            # or "N/A — no auth/network/storage touched"
+   ## Links                    # manifest / spec / ADR / sources / tasks
+   ```
+
+   Two rules that are not negotiable:
+   - **Never delete a section.** Fill it with `N/A — <reason>`. A missing
+     section is indistinguishable from a forgotten one.
+   - **`## Not verified` is the point of the template.** A check that did
+     not run is reported as "did not run", never as passed and never as
+     failed on its merits.
 8. Request review from the `reviewer` agent role and at least one human
    owner. Claude is never the sole approver.
 9. Stop. **Do not** merge — human gate only.
@@ -73,5 +89,7 @@ to write it, so future runs don't ask again.
 - Merging your own PR/MR (the human-gate phase is human).
 - `git push --force` (should be denied by the project's permission settings).
 - Landing a PR/MR with a red pipeline or unresolved review threads.
+- Deleting a template section instead of writing `N/A — <reason>`.
+- Leaving `## Not verified` empty because everything "seemed fine".
 - Copy-pasting the whole PR/MR description into the commit body — the
   PR/MR body is the artefact, the commit is the record.
