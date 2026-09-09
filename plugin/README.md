@@ -36,7 +36,24 @@ are saturated with Flutter/BLoC specifics inside).
 /plugin install vnd-ai-sdlc-stockbook@ai-sdlc-harness-mcp
 ```
 
-That is the whole install. There is **no clone, no `npm install`, no build
+Then, **once per repo**, bootstrap the harness into it:
+
+```
+/harness-init
+```
+
+That step is not optional. Installing the plugin gives you the commands; it
+does not give the repo the files those commands read. `/harness-init` detects
+the project's real toolchain, source roots, VCS host and default branch — by
+reading its manifests, never by assuming — and writes
+`docs/ai-sdlc/project.yml`, `phases.md`, `integration.md`, `docs/specs/README.md`
+and a `CLAUDE.md` section. It shows what it detected and asks before writing,
+never overwrites an existing file without `--force`, and records `UNKNOWN`
+rather than a guess for anything it could not determine. Without it,
+`/plan-feature` stops on the first step — which is exactly what happened the
+first time this plugin was pointed at a non-Stockbook repo.
+
+The plugin install itself needs **no clone, no `npm install`, no build
 step** — `vnd-ai-sdlc` ships the MCP server as a self-contained bundle
 inside the plugin (`vnd-ai-sdlc/mcp-server/index.mjs`, one file, no
 `node_modules`), so the tools work as soon as the plugin is installed.
@@ -97,6 +114,7 @@ exists to close a specific way the naive version goes wrong:
 
 | Command | Who runs it | What it does |
 |---|---|---|
+| `/harness-init` | any dev, once per repo | Detects toolchain/layout/VCS and scaffolds the config + phase docs the other commands read. Run before `/plan-feature`. |
 | `/skill-new <name>` | author | Picks the right plugin (Standard vs overlay — it asks rather than guesses), checks the name is not already taken in either, cuts a `skill/<name>` branch off `main`, scaffolds `SKILL.md` with real frontmatter. Stops there; you write the content. |
 | `/skill-submit <name>` | author | Validates the frontmatter is not still a placeholder, runs `claude plugin validate`, **bumps the plugin version**, pushes the branch, opens a Jira ticket (`create_jira_issue`) and a GitHub PR (`create_github_pull_request`) cross-linked to each other. |
 | `/skill-approve <pr>` | maintainer | Runs the mechanics + content checklist (version bumped, validator clean, no name collision, description actually specific, right plugin, no secrets, bundle rebuilt if the server changed), reports PASS/FAIL with evidence, transitions the Jira ticket. **Does not merge** — a human does that. |

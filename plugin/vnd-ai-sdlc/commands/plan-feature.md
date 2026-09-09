@@ -14,13 +14,17 @@ anything. Default agent: `architect`.
 1. Parse `$ARGUMENTS`:
    - First token = feature slug (`feed`, `post-composer`, ...).
    - Remaining = optional ticket id or URL.
-2. Read `CLAUDE.md`, `docs/ai-sdlc/integration.md`, and
-   `docs/ai-sdlc/phases.md` (Phase 0–1 only).
+2. Read `docs/ai-sdlc/project.yml`, `docs/ai-sdlc/integration.md`, and
+   `docs/ai-sdlc/phases.md` (Phase 0–1 only), plus `CLAUDE.md` if present.
+   **If `docs/ai-sdlc/project.yml` is missing, this repo has not been
+   initialised — stop and tell the user to run `/harness-init` first.** Do
+   not scaffold those files from here and do not proceed without them.
 3. Require `docs/specs/<feature>/traceability.yaml`. If it is missing,
    stop and run the intake bridge first. Verify its sources are current and
    read the selected task files before planning.
-4. Read any existing `docs/specs/<feature>/` or related code under
-   `modules/` and `lib/`.
+4. Read any existing `docs/specs/<feature>/`, plus related code under the
+   directories listed as `source_roots` in `docs/ai-sdlc/project.yml` — never
+   a hardcoded layout, since that differs per project.
 5. Apply prompt **P1** (restate-then-plan) then **P2** (layered
    design — high level only).
 5. Write `docs/specs/<feature-slug>/plan.md` using this structure:
