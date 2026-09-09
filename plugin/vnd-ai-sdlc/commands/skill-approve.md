@@ -24,6 +24,22 @@ different review and should be split.
 ## Mechanics checklist -- any NO blocks the merge
 
 - [ ] `plugin/<target>/.claude-plugin/plugin.json` `version` is bumped
+      **and the new value is higher than what is on `main` right now** --
+      not merely higher than what the branch forked from. Check it against
+      current `main`, never against the PR's own base commit:
+      ```bash
+      git show origin/main:plugin/<target>/.claude-plugin/plugin.json | grep '"version"'
+      git show <pr-branch>:plugin/<target>/.claude-plugin/plugin.json | grep '"version"'
+      ```
+      This is not pedantry. It is the check that a real incident defeated:
+      two contributors branched from the same base, both correctly bumped
+      `0.2.0 -> 0.2.1`, and the second PR merged with a **zero net diff** on
+      `plugin.json` -- the file was already at `0.2.1`. Its commit message
+      still says "Bumps 0.2.0 -> 0.2.1", so reading the message or the
+      branch diff tells you the bump happened. It did not. Everyone who
+      synced after the first merge was permanently stuck without the second
+      skill, and `claude plugin update` kept answering "already at the
+      latest version" forever, because from its side that was true.
       relative to `main`. **This is the one that silently breaks
       distribution**: without it `claude plugin update` reports "already at
       the latest version" and syncs nothing, so the merged skill reaches
@@ -80,6 +96,8 @@ evidence for each FAIL (file:line). Then one of:
 
 - Merging, closing, or force-pushing anything.
 - Passing a PR whose version was not bumped, however small the change.
+- Accepting the commit message's word for a bump. Read the resulting file on
+  `main`, not the claim.
 - Approving your own submission without a second person, when the team has
   more than one maintainer.
 - Rewriting the author's skill inside the review instead of asking for the
