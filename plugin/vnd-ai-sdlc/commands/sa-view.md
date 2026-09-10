@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 # /sa-view $ARGUMENTS
 
-Stage C1. See `docs/ai-sdlc/stage-c.md`. Default agent: `architect`.
+Stage C1. See `docs/ai-sdlc/stage-c-design.md`. Default agent: `architect`.
 
 Produces two files against `vnd.ai-sdlc.package-design/v1` and
 `vnd.ai-sdlc.integration-design/v1`:

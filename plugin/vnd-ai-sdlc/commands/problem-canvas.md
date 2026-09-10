@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 # /problem-canvas $ARGUMENTS
 
-Stage A2. See `docs/ai-sdlc/stage-a.md`.
+Stage A2. See `docs/ai-sdlc/stage-a-discovery.md`.
 
 Produces `docs/specs/<slug>/problem-statement-canvas.md` against
 `vnd.ai-sdlc.problem-statement-canvas/v1`. One A4 page, written for the
@@ -66,10 +66,19 @@ limit is what forces the framing to be sharp.
 
 ## Step 6 — DoD check
 
-State it plainly to the user: *someone outside the project should be able to
-read this and answer whose problem it is, when it happens, and how much it
-hurts.* Recommend actually testing it on a person before A3, and say that
-hesitation on any of the three means cutting, not adding.
+Run the mechanical proxy first: dispatch a fresh `Task` agent that receives
+**only** the finished canvas — no Idea Card, no chat history, no other
+context — and ask it to answer three questions from the canvas alone: whose
+problem is this, when does it happen, and how much does it hurt? If it
+cannot answer any of the three, the canvas is not done; revise and re-run
+the check rather than proceeding to A3.
+
+This proxy catches the mechanical failure (the canvas doesn't actually say
+those things) but not the substantive one (a fresh reader who is not a real
+user can still be satisfied by a wrong answer). So state plainly to the user
+that passing the proxy is necessary, not sufficient: recommend actually
+testing the canvas on a person outside the project before A3, and say that
+hesitation on any of the three questions means cutting, not adding.
 
 ## Step 7 — Write and update traceability
 

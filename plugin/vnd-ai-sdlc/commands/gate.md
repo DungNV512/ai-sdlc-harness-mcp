@@ -6,8 +6,8 @@ allowed-tools: Read, Write, Edit, Bash
 
 # /gate $ARGUMENTS
 
-Records the outcome of a human gate. See `docs/ai-sdlc/stage-a.md` (G1),
-`stage-b.md` (G2, G3) and `stage-c.md` (G4).
+Records the outcome of a human gate. See `docs/ai-sdlc/stage-a-discovery.md` (G1),
+`stage-b-definition.md` (G2, G3) and `stage-c-design.md` (G4).
 
 **What this command is not.** It does not decide, recommend, weigh options,
 or summarise the discussion. This is a scribe with a schema: it writes down
@@ -67,9 +67,11 @@ most often quietly cut, so refuse a G2 record with only one of the two.
    presentation: a meeting for the team to ask and the PM to listen.
 
 Also `open_questions_closed` — every `Q-NNN` answered, or listed with an
-owner and a deadline. **Many open questions left means the PRD is not ripe
-and stage C must not start.** If the count is high, record `NOT-RIPE` rather
-than `APPROVED` with a caveat.
+owner and a deadline. **The threshold is fixed, not felt: more than 2 open
+questions with no named owner and deadline means the PRD is not ripe and
+stage C must not start.** Record `NOT-RIPE` rather than `APPROVED` with a
+caveat. (A project may tighten this number in `project.yml`, never loosen
+it — check there before applying the default of 2.)
 
 ### G4 — Design sign-off, **per output**
 Every stage C owner signs, and **each output must meet its own DoD**. Record

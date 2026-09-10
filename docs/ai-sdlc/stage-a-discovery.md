@@ -12,7 +12,7 @@ Every DoD below is written to catch that failure early, while it still costs a
 working session instead of a quarter.
 
 **Where the rest of the framework lives.** Stage B (Define) is specified in
-`stage-b.md` and Stage C (Design) in `stage-c.md`, each with its own gates.
+`stage-b-definition.md` and Stage C (Design) in `stage-c-design.md`, each with its own gates.
 Stages P, D, E, F and O are the delivery half — see `phases.md`.
 
 **The Company Context Doc is a prerequisite for all of Stage A.** Every
@@ -192,7 +192,7 @@ reads later; the traceability entry is what the harness reads.
 A GO at G1 produces a `docs/specs/<slug>/traceability.yaml` whose `discovery`
 block links every Stage A artefact and whose `gates.G1` records the decision.
 That file is the input to Stage B, which turns the approved Discovery Report
-into a BRD and a PRD — see `stage-b.md`. Work that skips discovery entirely
+into a BRD and a PRD — see `stage-b-definition.md`. Work that skips discovery entirely
 (a bug fix, a small change) enters at Phase 0 instead, and `/plan-feature`
 reads the same manifest, refusing to plan anything whose `sources` block is
 empty — the same rule A1 enforces, applied later.

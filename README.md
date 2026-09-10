@@ -41,7 +41,7 @@ This repo is planned to hold two halves:
 | 2 | Confluence full parity (`get`/`update`/`search`/`list_spaces`) | ✅ built — **not live-tested**: `ipas-tech.atlassian.net` is egress-blocked. Logic covered by unit tests |
 | 3 | GitLab tools (5, read+create surface) | ✅ built — **not live-tested**: both `gitlab.com` and `gitlab-new.vndirect.com.vn` are egress-blocked. Logic covered by unit tests |
 | A | Stage A discovery (A0–A4) + G1 feasibility gate, with `/idea-card`, `/problem-canvas`, `/discovery-report`, `/gate` | ✅ built — A3 (market/feasibility scan) has a contract but no command yet |
-| — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v1`) + generation in `/plan-feature` | ✅ done |
+| — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v2`) + generation in `/plan-feature` | ✅ done |
 
 ### What "built but not live-tested" means here
 

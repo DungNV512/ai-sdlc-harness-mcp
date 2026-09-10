@@ -51,7 +51,7 @@ module: <module-or-package>
 # ---------------------------------------------------------------------------
 # Upstream discovery (Stage A). Present only for work that went through
 # discovery; omit the whole block for a bug fix or a small change that
-# entered at Phase 0. See docs/ai-sdlc/stage-a.md.
+# entered at Phase 0. See docs/ai-sdlc/stage-a-discovery.md.
 # ---------------------------------------------------------------------------
 discovery:
   issue_report: <Confluence URL or PENDING — reason>

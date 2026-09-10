@@ -180,7 +180,7 @@ gets the generic one.
   platform from a machine with network access before trusting them.
 - **Stage A3 has a contract but no command.** `/idea-card` (A1),
   `/problem-canvas` (A2), `/discovery-report` (A4) and `/gate` (G1) exist;
-  the market-scan and feasibility stage is specified in `stage-a.md` and run
+  the market-scan and feasibility stage is specified in `stage-a-discovery.md` and run
   by hand. `/discovery-report` refuses to invent A3's findings when its
   outputs are missing — it marks those sections `NOT DONE` and says the
   report is incomplete for gate purposes.

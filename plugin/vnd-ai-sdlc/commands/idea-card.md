@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 # /idea-card $ARGUMENTS
 
-Stage A1. See `docs/ai-sdlc/stage-a.md` for where this sits.
+Stage A1. See `docs/ai-sdlc/stage-a-discovery.md` for where this sits.
 
 Takes a raw signal and produces `docs/specs/<slug>/idea-card.md` against
 `vnd.ai-sdlc.idea-card/v1`. The whole job is separating three things that

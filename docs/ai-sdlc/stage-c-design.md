@@ -147,8 +147,9 @@ report it back rather than inventing a case that tests something adjacent.
 **Do** — STRIDE per feature: actor, attack, mitigation, residual risk. The
 `threat-modeling` skill already exists.
 
-**Out** — `THREAT MODEL` → `docs/specs/` in the repo (not Confluence — this
-one lives on the repo plane).
+**Out** — `THREAT MODEL` → `docs/specs/<slug>/threat-model.md` in the repo
+(not Confluence — this one lives on the repo plane). Template:
+`vnd.ai-sdlc.threat-model/v1`.
 
 **Done when** — a security requirement per component, findings carry
 severity, and **risk acceptance is signed**.

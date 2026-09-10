@@ -116,9 +116,9 @@ cannot meet its exit condition stops the run; it does not proceed degraded.
 
 These are the delivery phases: they start from work someone has already
 decided is worth doing. What happens before that decision is specified
-separately — discovery stages A0–A4 and gate G1 in `docs/ai-sdlc/stage-a.md`,
-definition B0–B2 with gates G2 and G3 in `stage-b.md`, and design C1–C5 with
-gate G4 in `stage-c.md`. Work can legitimately enter at Phase 0 without
+separately — discovery stages A0–A4 and gate G1 in `docs/ai-sdlc/stage-a-discovery.md`,
+definition B0–B2 with gates G2 and G3 in `stage-b-definition.md`, and design C1–C5 with
+gate G4 in `stage-c-design.md`. Work can legitimately enter at Phase 0 without
 passing through them (a bug fix, a small change); work that came the long way
 arrives with `discovery`, `define`, `design` and `gates` already filled in
 its manifest.
@@ -187,7 +187,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   (`vnd.ai-sdlc.pull-request/v1`).
 - `docs/ai-sdlc/templates/jira-ticket.md` — `vnd.ai-sdlc.jira-ticket/v1`.
 - `docs/ai-sdlc/templates/skill.md` — `vnd.ai-sdlc.skill/v1`.
-- `docs/ai-sdlc/templates/traceability.yaml` — `vnd.ai-sdlc.traceability/v1`.
+- `docs/ai-sdlc/templates/traceability.yaml` — `vnd.ai-sdlc.traceability/v2`.
   **Do not skip this one.** Eleven commands read `traceability.yaml`;
   `/plan-feature` generates each feature's copy from this schema. Without it
   every team hand-writes the manifest, guesses different key names, and the
@@ -198,6 +198,14 @@ to guess what it was handed. Write all of these, each only if missing (or with
   cadence, and every Stage A and Stage B prompt reads it. Without it the
   analysis is about a generic company rather than this one. Say in the report
   that it needs an owner assigned before `/idea-card` is useful.
+- `docs/ai-sdlc/company-context.md` — **the instance, not the template**,
+  only if missing. Every Stage A/B command reads this exact path (never the
+  template path) — `/idea-card`, `/problem-canvas`, `/market-scan`,
+  `/discovery-report`. Since Company Context has no per-feature generator (it
+  is standing, not produced by a phase), `/harness-init` is the only place it
+  gets created. Seed it as a copy of the template with every field marked
+  `NEEDS OWNER — not yet filled`, never with invented content — an instance
+  that looks filled in but isn't is worse than one that visibly isn't.
 - The **Stage A** contracts, written together since they only make sense as a
   set: `issue-report.md` (`vnd.ai-sdlc.issue-report/v1`), `idea-card.md`
   (`vnd.ai-sdlc.idea-card/v1`), `problem-statement-canvas.md`
@@ -212,9 +220,10 @@ to guess what it was handed. Write all of these, each only if missing (or with
   (`vnd.ai-sdlc.package-design/v1`), `integration-design.md`
   (`vnd.ai-sdlc.integration-design/v1`), `function-list.md`
   (`vnd.ai-sdlc.function-list/v1`), `srs.md` (`vnd.ai-sdlc.srs/v1`),
-  `ui-spec.md` (`vnd.ai-sdlc.ui-spec/v1`), and `test-strategy.md`
-  (`vnd.ai-sdlc.test-strategy/v1`).
-- `docs/ai-sdlc/stage-a.md`, `stage-b.md` and `stage-c.md` — the upstream
+  `ui-spec.md` (`vnd.ai-sdlc.ui-spec/v1`), `test-strategy.md`
+  (`vnd.ai-sdlc.test-strategy/v1`), and `threat-model.md`
+  (`vnd.ai-sdlc.threat-model/v1`).
+- `docs/ai-sdlc/stage-a-discovery.md`, `stage-b-definition.md` and `stage-c-design.md` — the upstream
   stages and the G1–G4 gates.
   Every upstream command — `/idea-card`, `/problem-canvas`, `/market-scan`,
   `/discovery-report`, `/context-doc`, `/brd`, `/prd`, `/sa-view`, `/srs`,
@@ -281,7 +290,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   person reads later) and `gates.G1` in the feature's `traceability.yaml`
   (what the harness reads).
 
-  ## Stage B — Define (see stage-b.md)
+  ## Stage B — Define (see stage-b-definition.md)
 
   | Phase | Produces | Command | DoD that bites |
   |---|---|---|---|
@@ -294,7 +303,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   Architect ending in **written** confirmation. G3: a one-hour team review
   *and* a 90-minute Sprint 0. These are the steps most often quietly cut.
 
-  ## Stage C — Design (see stage-c.md)
+  ## Stage C — Design (see stage-c-design.md)
 
   Hard ordering: **C1 → C2 → C3**, with C4 parallel to C3.
 
@@ -334,56 +343,143 @@ waiting to happen (see the `.mcp.json` bug), and the plugin ships no `docs/`
 directory to read from.
 
 The traceability manifest shape, which `/plan-feature` generates each
-feature's copy from:
+feature's copy from. **This is `vnd.ai-sdlc.traceability/v2`** — it must
+match `docs/ai-sdlc/templates/traceability.yaml` exactly; if the two ever
+drift, the template file is the one to trust and this block needs updating,
+not the other way round:
 
 ```yaml
-schema: vnd.ai-sdlc.traceability/v1
-slug: <feature-slug>
-title: <one line, plain language>
-status: draft                  # draft | active | shipped | abandoned
-created: <YYYY-MM-DD>
-owner: <person accountable>
+schema: vnd.ai-sdlc.traceability/v2
 
-sources:                       # at least one entry. NEVER empty.
+slug: <feature-slug>              # matches the docs/specs/<slug>/ folder name
+title: <one line, plain language>
+status: draft                     # draft | active | shipped | abandoned
+created: <YYYY-MM-DD>
+owner: <person accountable, not the author of the code>
+
+sources:                          # at least one entry. NEVER empty.
   - id: <TICKET-KEY or doc id>
-    type: jira                 # jira | confluence | issue | incident | conversation
+    type: jira                    # jira | confluence | issue | incident | conversation
     title: <as it reads at the source>
     url: <link>
-    retrieved: <YYYY-MM-DD>    # stale sources mislead; record when it was read
+    retrieved: <YYYY-MM-DD>       # when it was last read; stale sources mislead
 
-module: <module-or-package>    # omit the key if the project has no such concept
+module: <module-or-package>       # omit the key if the project has no such concept
 
-discovery:                     # omit the block entirely for work that did not
-  issue_report: PENDING — ...  # come through Stage A
-  idea_card: PENDING — ...
-  problem_statement_canvas: PENDING — ...
-  market_scan: PENDING — ...
-  feasibility_assessment: PENDING — ...
-  discovery_report: PENDING — ...
+# Upstream discovery (Stage A). Present only for work that went through
+# discovery; omit the whole block for a bug fix that entered at Phase 0.
+discovery:
+  issue_report: <Confluence URL or PENDING — reason>
+  idea_card: <Confluence URL or PENDING — reason>
+  problem_statement_canvas: <Confluence URL or PENDING — reason>
+  market_scan: <Confluence URL or PENDING — reason>
+  feasibility_assessment: <Confluence URL or PENDING — reason>
+  discovery_report: <Confluence URL or PENDING — reason>
 
+# Stage B (Define). Present for work that went through B0-B2.
+define:
+  systems_context: <Confluence URL or PENDING — reason>
+  brd: <Confluence URL or PENDING — reason>
+  prd: <Confluence URL or PENDING — reason>
+  legal_status: not_applicable    # not_applicable | requested | received
+  legal_requested: <YYYY-MM-DD, or omit>
+  rule_ids:    []                 # e.g. [BR-001..BR-014, SR-001..SR-003]
+  feature_ids: []                 # e.g. [F-001..F-022]
+  ac_ids:      []                 # e.g. [AC-001..AC-058]
+  trace_check:                    # the two-way BRD<->PRD check from B2
+    uncovered_rules: []
+    untraced_features: []
+
+# Stage C (Design).
+design:
+  package_design: <Confluence URL or PENDING — reason>
+  integration_design: <Confluence URL or PENDING — reason>
+  function_list: <Confluence URL or PENDING — reason>
+  srs: <Confluence URL or PENDING — reason>
+  ui_spec: <Confluence URL or PENDING — reason>
+  test_strategy: <Confluence URL or PENDING — reason>
+  threat_model: <repo path or PENDING — reason>
+  blocked_contracts: []           # contracts needed but not confirmed, visible at G4
+  figma_file_key: <published key or PENDING — reason>   # never an unsaved-* key
+  user_story_ids: []              # e.g. [US1-01, US1-02, US2-01] — assigned once at C2
+  coverage_thresholds:
+    overall: <n>%
+    domain: <n>%
+    enforced_by: <hook or CI job>
+
+# Gate decisions. A gate is a human decision point; nothing here is ever
+# written by an AI on its own authority.
 gates:
-  G1:
-    decision: PENDING          # PENDING | GO | NO-GO | NEED-DATA
+  G1:                              # Feasibility gate, end of Stage A
+    decision: PENDING              # PENDING | GO | NO-GO | NEED-DATA
     date: <YYYY-MM-DD>
-    decided_by: <who actually decided>
+    decided_by: <C-level name/role who actually decided>
     minutes: <Confluence URL>
-    # NO-GO adds: reason, submitter_notified
-    # NEED-DATA adds: needed_data, data_owner, return_by (all three)
+    needed_data: <what specifically, or omit>     # NEED-DATA only
+    data_owner: <who fetches it, or omit>          # NEED-DATA only
+    return_by: <YYYY-MM-DD, or omit>               # NEED-DATA only
+    reason: <why, or omit>                         # NO-GO only
+    submitter_notified: <YYYY-MM-DD, or omit>      # NO-GO only
+
+  G2:                              # BRD sign-off, end of B1. TWO PARTS, both required.
+    decision: PENDING              # PENDING | APPROVED | IN-REVIEW | BLOCKED
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    c_level_approved:
+      by: <who>
+      date: <YYYY-MM-DD>
+    architect_confirmation:        # >= 60 min sitting together; WRITTEN confirmation
+      by: <Architect name>
+      date: <YYYY-MM-DD>
+      link: <URL of the email or comment>
+    blocked_on: <e.g. legal advice, or omit>
+
+  G3:                              # PRD sign-off, end of B2. TWO PARTS.
+    decision: PENDING              # PENDING | APPROVED | FIX-TOP-3 | NOT-RIPE
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    team_review:                   # 1 hour: Dev + QA + Designer + PM
+      date: <YYYY-MM-DD>
+      attendees: []
+    sprint0_kickoff:                # 90 minutes walking the whole PRD
+      date: <YYYY-MM-DD>
+      attendees: []
+    open_questions_closed: false    # > 2 unowned Q-NNN => NOT-RIPE, see stage-b-definition.md
+
+  G4:                              # Design sign-off, end of stage C. PER OUTPUT.
+    decision: PENDING              # PENDING | SIGNED-OFF | DOD-NOT-MET | ANOTHER-ROUND
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    outputs:
+      package_design:      { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      integration_design:  { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      function_list:       { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      srs:                 { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      ui_spec:             { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      test_strategy:       { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      threat_model:        { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+    version_control_active: false   # G4 turns this on; see stage-c-design.md
+
+  G5:                              # Human merge gate, end of F3.
+    decision: PENDING              # PENDING | MERGED | CHANGES-REQUESTED | CLOSED
+    date: <YYYY-MM-DD>
+    approved_by: <the human who approved - never the harness>
+    mr_url: <URL>
 
 tasks:
   - id: T1
     summary: <what this task delivers>
-    status: todo               # todo | doing | done | dropped
-    covers: []                 # requirement ids from spec.md
+    status: todo                   # todo | doing | done | dropped
+    covers: []                     # requirement ids from spec.md, e.g. [FR-001]
 
 artefacts:
   plan: docs/specs/<slug>/plan.md
   spec: docs/specs/<slug>/spec.md
-  adrs: []
-  pr: PENDING — not opened yet
+  adrs: []                         # docs/ai-sdlc/adr/<n>-<slug>.md
+  pr: <URL once opened, else PENDING — not opened yet>
 
-code: []                       # - path: ...   tasks: [T1]
-tests: []                      # - path: ...   covers: [T1]
+code: []                          # - path: ...   tasks: [T1]
+tests: []                         # - path: ...   covers: [T1]
 
 evidence:
   lint: PENDING — not run yet
@@ -391,10 +487,15 @@ evidence:
   security_review: PENDING — not run yet
 ```
 
-Two rules the file carries: `sources` is never empty (a feature with no
-source is an orphan), and unknown is written as `PENDING — <reason>`, never
+Three rules the file carries: `sources` is never empty (a feature with no
+source is an orphan); unknown is written as `PENDING — <reason>`, never
 omitted and never guessed — a missing key and a deliberately-unknown one
-must not look the same.
+must not look the same; and the `discovery`/`define`/`design` blocks are each
+omitted **entirely** for work that skipped that stage (entered at Phase 0),
+never left present with every field `PENDING` — an omitted block means "not
+applicable," a present-but-pending block means "applicable, not done yet,"
+and collapsing that distinction is what caused the traceability generation
+bug this file exists to close.
 
 The fixed PR body shape is:
 
@@ -427,7 +528,7 @@ One folder per task: `docs/specs/<slug>/`, holding
 - For work that came through discovery: `idea-card.md` (A1),
   `problem-statement-canvas.md` (A2), `market-scan.md` /
   `feasibility-assessment.md` (A3), `discovery-report.md` (A4). See
-  `docs/ai-sdlc/stage-a.md`.
+  `docs/ai-sdlc/stage-a-discovery.md`.
 ```
 
 ### `CLAUDE.md`

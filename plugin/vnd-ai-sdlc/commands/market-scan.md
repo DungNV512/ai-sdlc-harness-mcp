@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, WebSearch, WebFetch, Task
 
 # /market-scan $ARGUMENTS
 
-Stage A3. See `docs/ai-sdlc/stage-a.md`. Default agent: `pm-analyst`.
+Stage A3. See `docs/ai-sdlc/stage-a-discovery.md`. Default agent: `pm-analyst`.
 
 Produces two artefacts against `vnd.ai-sdlc.market-scan/v1` and
 `vnd.ai-sdlc.feasibility-assessment/v1`:

@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 # /test-strategy $ARGUMENTS
 
-Stage C4. See `docs/ai-sdlc/stage-c.md`. Owner: FS 22 Quality Engineering.
+Stage C4. See `docs/ai-sdlc/stage-c-design.md`. Owner: FS 22 Quality Engineering.
 
 Produces `docs/specs/<slug>/test-strategy.md` against
 `vnd.ai-sdlc.test-strategy/v1`.

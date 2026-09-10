@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 # /ui-spec $ARGUMENTS
 
-Stage C3. See `docs/ai-sdlc/stage-c.md`. Default agent: `px-designer`.
+Stage C3. See `docs/ai-sdlc/stage-c-design.md`. Default agent: `px-designer`.
 
 Produces `docs/specs/<slug>/ui-spec.md` against `vnd.ai-sdlc.ui-spec/v1`,
 alongside the Figma frames themselves.

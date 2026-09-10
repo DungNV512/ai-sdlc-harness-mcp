@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 # /context-doc $ARGUMENTS
 
-Stage B0. See `docs/ai-sdlc/stage-b.md`.
+Stage B0. See `docs/ai-sdlc/stage-b-definition.md`.
 
 Produces `docs/specs/<slug>/systems-context.md` against
 `vnd.ai-sdlc.systems-context/v1`.

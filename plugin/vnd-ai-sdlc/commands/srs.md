@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 # /srs $ARGUMENTS
 
-Stage C2. See `docs/ai-sdlc/stage-c.md`. Default agent: `architect`.
+Stage C2. See `docs/ai-sdlc/stage-c-design.md`. Default agent: `architect`.
 
 Produces `docs/specs/<slug>/function-list.md` and `docs/specs/<slug>/srs.md`
 against `vnd.ai-sdlc.function-list/v1` and `vnd.ai-sdlc.srs/v1`.

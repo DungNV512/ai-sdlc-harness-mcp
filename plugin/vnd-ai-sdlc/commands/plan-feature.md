@@ -31,7 +31,7 @@ anything. Default agent: `architect`.
      planning.
    - **It does not exist** → create it from
      `docs/ai-sdlc/templates/traceability.yaml`
-     (`vnd.ai-sdlc.traceability/v1`), filling only what you can actually
+     (`vnd.ai-sdlc.traceability/v2`), filling only what you can actually
      determine:
      - `slug`, `title`, `created`, `status: draft`;
      - `sources` — from the ticket id/URL passed as the second argument
@@ -40,6 +40,13 @@ anything. Default agent: `architect`.
        `docs/specs/<feature>/idea-card.md` and friends are present, in which
        case also fill the `discovery` block and `gates.G1` from what is
        recorded there;
+     - if Stage B artefacts are present (`brd.md`, `prd.md`), also fill the
+       `define` block and `gates.G2`/`gates.G3` from what is recorded there;
+       same for Stage C artefacts and the `design` block / `gates.G4`. A
+       block for a stage that was never run is **omitted entirely**, not left
+       present with every field `PENDING` — that distinction is what a
+       downstream command uses to tell "not applicable" from "applicable,
+       not done yet";
      - everything else stays `PENDING — <reason>`. Never invent a source,
        never write a plausible ticket key, and never leave a key out to make
        the file look complete.

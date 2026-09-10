@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 # /brd $ARGUMENTS
 
-Stage B1. See `docs/ai-sdlc/stage-b.md`. Default agent: `pm-analyst`.
+Stage B1. See `docs/ai-sdlc/stage-b-definition.md`. Default agent: `pm-analyst`.
 
 Produces `docs/specs/<slug>/brd.md` against `vnd.ai-sdlc.brd/v1`.
 

@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 # /discovery-report $ARGUMENTS
 
-Stage A4. See `docs/ai-sdlc/stage-a.md`. This is the only document that goes
+Stage A4. See `docs/ai-sdlc/stage-a-discovery.md`. This is the only document that goes
 into G1, so everything about it is shaped by a 60-minute meeting.
 
 Produces `docs/specs/<slug>/discovery-report.md` against
@@ -14,7 +14,12 @@ Produces `docs/specs/<slug>/discovery-report.md` against
 
 ## Step 1 — Pre-conditions, stated honestly
 
-Require `docs/specs/<slug>/problem-statement-canvas.md`.
+Require `docs/specs/<slug>/problem-statement-canvas.md` and the Company
+Context Doc (`docs/ai-sdlc/company-context.md`, or the path in
+`project.yml`). Without the Company Context Doc, sections that should read
+as specific to this company (resourcing, existing systems, prior attempts)
+degrade into generic text — note this in the report rather than writing
+around it.
 
 A3's outputs (`market-scan.md`, `feasibility-assessment.md`) are expected but
 may not exist — A3 has no command yet. If either is missing, do **not**

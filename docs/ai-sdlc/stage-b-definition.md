@@ -79,7 +79,7 @@ Confluence. Template: `vnd.ai-sdlc.brd/v1`.
 | `SR` | Security | authn, authz, confidentiality, audit, segregation of duties |
 | `IR` | Integration | interaction with **named** systems |
 
-### Done when — all seven
+**Done when** — all seven must hold:
 
 1. Every rule has a **unique id**.
 2. **No rule contradicts another.** `SR` against `BR` is where they hide.
@@ -155,7 +155,7 @@ This is the most valuable mechanical check in the upstream half, because it
 catches in an afternoon what otherwise surfaces as an argument in sprint
 three.
 
-### Done when — all eight
+**Done when** — all eight must hold:
 
 1. Every Must-have feature has **≥ 2 testable acceptance criteria**.
 2. No feature contradicts a BRD rule.
@@ -188,8 +188,10 @@ question raised goes into Open Questions with an owner and a deadline.
 | `FIX-TOP-3` | approved subject to three named fixes |
 | `NOT-RIPE` | too many open questions — **stage C must not start** |
 
-Many unanswered open questions means the PRD is not ripe. Record `NOT-RIPE`
-rather than `APPROVED` with a caveat; a caveat is not a gate.
+**The threshold is fixed, not felt: more than 2 open questions with no named
+owner and deadline at the close of Sprint 0 means `NOT-RIPE`.** Record it
+rather than `APPROVED` with a caveat; a caveat is not a gate. A project may
+set a stricter number in `project.yml`, never a looser one.
 
 ---
 
