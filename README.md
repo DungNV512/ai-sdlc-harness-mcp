@@ -6,8 +6,8 @@ around the Stockbook app project.
 This repo is planned to hold two halves:
 
 - **[`mcp-server/`](./mcp-server)** — an MCP (Model Context Protocol)
-  server exposing Confluence, Jira, GitHub, a Claude Code trigger tool, and
-  (planned) GitLab and Microsoft Teams tools. Usable from any MCP client
+  server exposing Confluence, Jira, GitHub, GitLab, Microsoft Teams and a
+  Claude Code trigger tool — 28 tools. Usable from any MCP client
   (Claude Code, Claude Desktop, Cowork, or any other MCP-speaking agent),
   not just from inside one repo.
 - **[`plugin/`](./plugin)** — an installable Claude Code plugin
@@ -37,9 +37,30 @@ This repo is planned to hold two halves:
 | 6 | Plugin extraction (`plugin/`, marketplace.json, Standard/overlay split) | ✅ done — real-installed + verified with a live Claude Code CLI (see `plugin/README.md`) |
 | 7 | Self-contained plugin: MCP server bundled inside `vnd-ai-sdlc` + dev-override launcher | ✅ done |
 | 7 | Skill lifecycle commands (`/skill-new`, `/skill-submit`, `/skill-approve`, `/skill-sync`) with Jira + PR approval gate | ✅ done |
-| 2 | Confluence full parity (update/get/search/list spaces) | planned |
-| 3 | GitLab tools | deferred — same egress block as Confluence/Jira makes them unverifiable right now; blocks Standard's genericized `/pr` for `vcs: gitlab` |
-| 4 | Microsoft Teams (`send_teams_message` via Incoming Webhook) | planned — blocked on a webhook URL |
+| 4 | Microsoft Teams (`send_teams_message` via a Workflows webhook) | ✅ built — **not live-tested**: the org egress allowlist blocks `powerplatform.com`, so the POST must be verified from a machine that can reach Microsoft |
+| 2 | Confluence full parity (`get`/`update`/`search`/`list_spaces`) | ✅ built — **not live-tested**: `ipas-tech.atlassian.net` is egress-blocked. Logic covered by unit tests |
+| 3 | GitLab tools (5, read+create surface) | ✅ built — **not live-tested**: both `gitlab.com` and `gitlab-new.vndirect.com.vn` are egress-blocked. Logic covered by unit tests |
+| A | Stage A discovery (A0–A4) + G1 feasibility gate, with `/idea-card`, `/problem-canvas`, `/discovery-report`, `/gate` | ✅ built — A3 (market/feasibility scan) has a contract but no command yet |
+| — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v2`) + generation in `/plan-feature` | ✅ done |
+
+### What "built but not live-tested" means here
+
+Three integrations are complete, build clean, and pass unit and stdio
+JSON-RPC tests, but have never made a real call — every one of their hosts
+(`gitlab.com`, `gitlab-new.vndirect.com.vn`, `ipas-tech.atlassian.net`,
+`powerplatform.com`) is refused by this environment's egress allowlist,
+which permits `github.com`. That is why GitHub is the one platform with a
+genuine end-to-end verification behind it.
+
+So the request/response shapes are exercised against stubs, not against the
+real APIs. The places where those APIs differ in ways a naive port gets
+wrong — GitLab addressing projects by URL-encoded path, having no draft flag,
+replacing rather than appending reviewer lists, taking numeric user ids
+instead of usernames; Confluence requiring version *current + 1* on every
+update — are handled explicitly and covered by
+`mcp-server/unit-test.mjs`. What is *not* covered is whether the endpoints
+behave as documented. Run `npm test` in `mcp-server/`, then make one real
+call per platform from a machine with network access before trusting them.
 
 See `mcp-server/README.md` for the tool reference and setup instructions.
 

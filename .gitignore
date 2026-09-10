@@ -1,0 +1,4 @@
+# Runtime telemetry written by /agent-metrics during local plugin testing —
+# not part of the shipped harness, never meant to be committed.
+.metrics/
+**/.metrics/

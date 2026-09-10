@@ -11,6 +11,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
+    "test": "npm run build && node unit-test.mjs && node smoke-test.mjs",
+    "test:unit": "node unit-test.mjs",
+    "test:smoke": "node smoke-test.mjs",
     "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --outfile=../plugin/vnd-ai-sdlc/mcp-server/index.mjs --banner:js='import{createRequire}from\"module\";const require=createRequire(import.meta.url);'"
   },
   "license": "MIT",

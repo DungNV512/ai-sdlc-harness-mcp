@@ -16,15 +16,26 @@ missing, stop and tell the user to run `/harness-init` first rather than
 guessing the host. If the file exists but `vcs` is unset, ASK once and offer
 to write it, so future runs don't ask again.
 
-- `vcs: github` — calls the `create_github_pull_request` MCP tool
-  (`ai-sdlc-harness-mcp`'s GitHub tools, live since Phase 3).
-- `vcs: gitlab` — calls a `create_gitlab_merge_request` MCP tool. **This
-  tool does not exist yet** (GitLab support in `ai-sdlc-harness-mcp` is
-  deferred — see that repo's top-level README roadmap). If your project
-  is GitLab-hosted, install an overlay plugin that ships its own `/pr`
-  override with the existing `glab`-CLI-based flow (Stockbook's overlay
-  does exactly this) rather than relying on this Standard command until
-  the GitLab MCP tool lands.
+- `vcs: github` — calls the `create_github_pull_request` MCP tool.
+  Needs `GITHUB_TOKEN`.
+- `vcs: gitlab` — calls the `create_gitlab_merge_request` MCP tool. Needs
+  `GITLAB_TOKEN`, and `GITLAB_API_URL` set to `https://<host>/api/v4` for a
+  self-hosted instance (it defaults to gitlab.com).
+
+Both hosts are supported by the same command; the differences are handled
+inside the tools rather than by branching in this command, with three
+exceptions worth knowing because they change what you pass:
+
+| | GitHub | GitLab |
+|---|---|---|
+| Repo identity | `owner` + `repo` | `project`: numeric id **or** `group/subgroup/project` |
+| Branch fields | `head` / `base` | `sourceBranch` / `targetBranch` |
+| Draft | `draft: true` | `draft: true` — the tool prefixes the title with `Draft: `, since GitLab has no draft flag |
+| Reviewers | usernames | usernames, resolved to numeric ids by the tool; an unknown username fails loudly |
+
+A GitLab-hosted project that prefers the `glab` CLI can still install an
+overlay shipping its own `/pr` (Stockbook's does), but that is now a
+preference rather than a necessity.
 
 ## Steps
 
@@ -47,12 +58,20 @@ to write it, so future runs don't ask again.
    - Re-push after rebase/amend: `git push --force-with-lease origin
      <branch>`. Never plain `--force`.
 6. Read `docs/specs/<slug>/traceability.yaml` and include its links in the
-   PR/MR body. Call the matching MCP tool (owner/repo resolved from the
-   git remote):
+   PR/MR body — `sources`, `artefacts.spec`, any `adrs`, and the
+   `discovery`/`gates` block when the work came through Stage A. Then call
+   the matching MCP tool, resolving the repo identity from the git remote:
    - GitHub: `create_github_pull_request` with `title`, `head` (current
      branch), `base` (`$2`, default `main`), `body` (the filled template
      from step 7), `draft: true`.
-   - GitLab: `create_gitlab_merge_request` — not yet available, see above.
+   - GitLab: `create_gitlab_merge_request` with `title`, `sourceBranch`
+     (current branch), `targetBranch` (`$2`, default `main`), `description`
+     (the same filled template), `draft: true`.
+
+   After it is created, write the returned URL back into
+   `artefacts.pr` in `traceability.yaml`, replacing the `PENDING` value. The
+   manifest is the thing later phases read; a PR that exists but is not
+   recorded there is invisible to them.
 7. Fill the PR/MR body using the **standard artefact template**
    (`vnd.ai-sdlc.pull-request/v1`). This is the same shape `/skill-submit`
    produces -- one repo must not have two PR contracts. If the repo has
