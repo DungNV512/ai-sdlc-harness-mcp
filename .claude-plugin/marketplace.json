@@ -8,7 +8,7 @@
     {
       "name": "vnd-ai-sdlc",
       "source": "./plugin/vnd-ai-sdlc",
-      "description": "Framework-agnostic AI-SDLC harness: Stage A discovery commands and the G1 gate, delivery commands, agents, versioned artefact templates, and MCP integrations (Confluence, Jira, GitHub, GitLab, Teams, Claude Code trigger)."
+      "description": "Framework-agnostic AI-SDLC harness: Stage A discovery, Stage B definition (BRD/PRD with the two-way scope-creep check), Stage C design (architecture, SRS, UI spec, test strategy), all five human gates, five role agents, 20 versioned artefact templates, and MCP integrations (Confluence, Jira, GitHub, GitLab, Teams, Claude Code trigger)."
     },
     {
       "name": "vnd-ai-sdlc-stockbook",

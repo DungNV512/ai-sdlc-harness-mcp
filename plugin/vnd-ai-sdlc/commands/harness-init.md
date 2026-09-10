@@ -115,12 +115,13 @@ Each phase has one owner, one artefact, and one exit condition. A phase that
 cannot meet its exit condition stops the run; it does not proceed degraded.
 
 These are the delivery phases: they start from work someone has already
-decided is worth doing. What happens before that decision — discovery stages
-A0–A4 and the G1 feasibility gate — is specified in
-`docs/ai-sdlc/stage-a.md`. Work can legitimately enter at Phase 0 without
-passing through Stage A (a bug fix, a small change); work that did pass
-through it arrives with `discovery` and `gates.G1` already filled in its
-manifest.
+decided is worth doing. What happens before that decision is specified
+separately — discovery stages A0–A4 and gate G1 in `docs/ai-sdlc/stage-a.md`,
+definition B0–B2 with gates G2 and G3 in `stage-b.md`, and design C1–C5 with
+gate G4 in `stage-c.md`. Work can legitimately enter at Phase 0 without
+passing through them (a bug fix, a small change); work that came the long way
+arrives with `discovery`, `define`, `design` and `gates` already filled in
+its manifest.
 
 | # | Phase | Command | Artefact | Exit condition |
 |---|-------|---------|----------|----------------|
@@ -191,17 +192,34 @@ to guess what it was handed. Write all of these, each only if missing (or with
   `/plan-feature` generates each feature's copy from this schema. Without it
   every team hand-writes the manifest, guesses different key names, and the
   later phases fail on fields that were never there.
-- The Stage A discovery contracts, written together since they only make
-  sense as a set: `docs/ai-sdlc/templates/idea-card.md`
-  (`vnd.ai-sdlc.idea-card/v1`),
-  `docs/ai-sdlc/templates/problem-statement-canvas.md`
-  (`vnd.ai-sdlc.problem-statement-canvas/v1`), and
-  `docs/ai-sdlc/templates/discovery-report.md`
+- `docs/ai-sdlc/templates/company-context.md` —
+  `vnd.ai-sdlc.company-context/v1`. **Write this one even though it is not
+  per-feature.** It is standing background with one named owner and a review
+  cadence, and every Stage A and Stage B prompt reads it. Without it the
+  analysis is about a generic company rather than this one. Say in the report
+  that it needs an owner assigned before `/idea-card` is useful.
+- The **Stage A** contracts, written together since they only make sense as a
+  set: `issue-report.md` (`vnd.ai-sdlc.issue-report/v1`), `idea-card.md`
+  (`vnd.ai-sdlc.idea-card/v1`), `problem-statement-canvas.md`
+  (`vnd.ai-sdlc.problem-statement-canvas/v1`), `market-scan.md`
+  (`vnd.ai-sdlc.market-scan/v1`), `feasibility-assessment.md`
+  (`vnd.ai-sdlc.feasibility-assessment/v1`), and `discovery-report.md`
   (`vnd.ai-sdlc.discovery-report/v1`).
-- `docs/ai-sdlc/stage-a.md` — the upstream discovery stages and the G1 gate.
-  `/idea-card`, `/problem-canvas`, `/discovery-report` and `/gate` read this
-  file **from the consuming repo**, the same way every command reads
-  `project.yml` from there. Inline the content below rather than reading it
+- The **Stage B** contracts: `systems-context.md`
+  (`vnd.ai-sdlc.systems-context/v1`), `brd.md` (`vnd.ai-sdlc.brd/v1`), and
+  `prd.md` (`vnd.ai-sdlc.prd/v1`).
+- The **Stage C** contracts: `package-design.md`
+  (`vnd.ai-sdlc.package-design/v1`), `integration-design.md`
+  (`vnd.ai-sdlc.integration-design/v1`), `function-list.md`
+  (`vnd.ai-sdlc.function-list/v1`), `srs.md` (`vnd.ai-sdlc.srs/v1`),
+  `ui-spec.md` (`vnd.ai-sdlc.ui-spec/v1`), and `test-strategy.md`
+  (`vnd.ai-sdlc.test-strategy/v1`).
+- `docs/ai-sdlc/stage-a.md`, `stage-b.md` and `stage-c.md` — the upstream
+  stages and the G1–G4 gates.
+  Every upstream command — `/idea-card`, `/problem-canvas`, `/market-scan`,
+  `/discovery-report`, `/context-doc`, `/brd`, `/prd`, `/sa-view`, `/srs`,
+  `/ui-spec`, `/test-strategy` and `/gate` — reads these **from the consuming
+  repo**, the same way every command reads `project.yml` from there. Inline the content below rather than reading it
   from the installed plugin by path — a path relative to an installed plugin
   is a failure waiting to happen (see the `.mcp.json` bug), and the plugin
   ships no `docs/` directory to read from in the first place.
@@ -263,12 +281,39 @@ to guess what it was handed. Write all of these, each only if missing (or with
   person reads later) and `gates.G1` in the feature's `traceability.yaml`
   (what the harness reads).
 
-  ## Stages B through O
+  ## Stage B — Define (see stage-b.md)
 
-  Not defined. They are named in the wider framework but their contracts
-  have not been supplied, and nothing here invents them — a plausible guess
-  at a stage boundary is worse than an admitted gap, because later work gets
-  validated against it.
+  | Phase | Produces | Command | DoD that bites |
+  |---|---|---|---|
+  | B0 | Systems & Projects Context Doc | `/context-doc` | **Humans only, no AI generation.** Architect fills the technical debt and data/integration sections personally. Regulated domain → the BRD cannot be finalised until legal advises. |
+  | B1 | BRD, rules `BR/DR/SR/IR-NNN` | `/brd` | Unique ids · no rule contradicts another · every `IR` **names** a system · every metric has a number and a date · C-level approved · **Architect confirmed in writing** · legal confirmed if regulated |
+  | B2 | PRD, ids `F/AC/Q-NNN` | `/prd` | ≥ 2 testable ACs per Must-have · every feature traces to ≥ 1 rule (**untraced = scope creep**) · a developer can estimate and QA can write cases without asking · personas state validated-or-assumption |
+
+  **G2** (after B1) and **G3** (after B2) are each **two parts and need
+  both**. G2: C-level approval *and* a ≥ 60-minute walkthrough with the
+  Architect ending in **written** confirmation. G3: a one-hour team review
+  *and* a 90-minute Sprint 0. These are the steps most often quietly cut.
+
+  ## Stage C — Design (see stage-c.md)
+
+  Hard ordering: **C1 → C2 → C3**, with C4 parallel to C3.
+
+  | Phase | Produces | Command | DoD that bites |
+  |---|---|---|---|
+  | C1 | Package + Integration Design | `/sa-view` | Scalability and security reviewed · **every API contract confirmed with a person**, not a docs link · no BRD rule violated |
+  | C2 | Function List + SRS, `USn` ids | `/srs` | Every requirement testable · every SRS item traces up to the PRD · every state listed, not just the happy path |
+  | C3 | Figma frames + design tokens | `/ui-spec` | ≥ 1 round with **representative users** · WCAG 2.1 AA on real values · **published file key, never `unsaved-*`** · stable `nodeId` per frame |
+  | C4 | Test Strategy | `/test-strategy` | Coverage thresholds **as numbers, decided per project** with a named enforcer · every AC has a sketched test case |
+  | C5 | Threat Model | `/security-review` | Security requirement per component · findings carry severity · risk acceptance signed |
+
+  **G4** signs **per output**; any output short of its DoD means stage P does
+  not start. G4 also switches on **mandatory version control**: after it, any
+  change to a signed-off artefact needs a new version, a reason, and
+  notification of everyone who read the old one.
+
+  ## Stages P, D, E, F, O
+
+  The delivery half — see `phases.md`.
   ```
 - The host-native PR template, so a person opening a PR by hand in the web
   UI gets the same shape a command would produce. **Path depends on `vcs`

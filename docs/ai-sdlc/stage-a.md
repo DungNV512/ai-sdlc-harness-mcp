@@ -11,12 +11,15 @@ It is building the right-looking feature for a problem nobody actually has.
 Every DoD below is written to catch that failure early, while it still costs a
 working session instead of a quarter.
 
-**Status of the wider framework.** Stage A and gate G1 are specified here
-because they were specified to us in full. Stages B through O are named in
-`/plan-feature`'s framework reference but their contracts have **not** been
-supplied, and nothing in this repo defines them. They are deliberately left
-undefined rather than invented — a plausible guess at a stage boundary is
-worse than an admitted gap, because later work would be validated against it.
+**Where the rest of the framework lives.** Stage B (Define) is specified in
+`stage-b.md` and Stage C (Design) in `stage-c.md`, each with its own gates.
+Stages P, D, E, F and O are the delivery half — see `phases.md`.
+
+**The Company Context Doc is a prerequisite for all of Stage A.** Every
+prompt from A1 onward reads it, and without it the analysis is about a
+generic company rather than yours. Template:
+`docs/ai-sdlc/templates/company-context.md`. It is standing, not
+per-feature — one owner, a fixed review cadence, no gate.
 
 ---
 
@@ -24,10 +27,10 @@ worse than an admitted gap, because later work would be validated against it.
 
 | Stage | What it produces | Who drives | Build status |
 |---|---|---|---|
-| A0 Issue intake | Issue Report | AI tool | Contract fixed here; channel is infrastructure, not a command |
+| A0 Issue intake | Issue Report | AI tool | `vnd.ai-sdlc.issue-report/v1`; the channel itself is infrastructure, not a command |
 | A1 Signal normalisation | Idea Card | AI tool | `/idea-card` |
 | A2 Problem framing | Problem Statement Canvas | AI generator + a human working session | `/problem-canvas` |
-| A3 Market & feasibility scan | Market Scan Report, Feasibility Assessment | AI generator + tools, human verifies figures | Contract fixed here; command not built |
+| A3 Market & feasibility scan | Market Scan Report, Feasibility Assessment | AI generator + tools, human verifies figures | `/market-scan` |
 | A4 Discovery synthesis | Discovery Report | AI generator + mandatory AI reviewer | `/discovery-report` |
 | G1 Feasibility gate | Decision + minutes | **Humans only** | `/gate G1` records the outcome |
 
@@ -46,6 +49,7 @@ solution in mind should be able to say so without that solution contaminating
 the problem statement. Commit publicly to a response time.
 
 **Out** — `ISSUE REPORT` → Confluence, plus a continuously maintained backlog.
+Template: `vnd.ai-sdlc.issue-report/v1`.
 
 **Done when** — within 3–5 working days the submitter has received exactly one
 of three answers: taken into the cycle; deferred, with the reason; or merged
@@ -118,6 +122,7 @@ A human verifies the figures. Not reviews them: verifies them, against the
 source.
 
 **Out** — `MARKET SCAN REPORT` and `FEASIBILITY ASSESSMENT` → Confluence.
+Templates: `vnd.ai-sdlc.market-scan/v1`, `vnd.ai-sdlc.feasibility-assessment/v1`.
 
 **Done when** — there is at least one advantage that is both **specific** and
 **defensible**. "We will do it better" is not an advantage and is rejected at
@@ -186,6 +191,8 @@ reads later; the traceability entry is what the harness reads.
 
 A GO at G1 produces a `docs/specs/<slug>/traceability.yaml` whose `discovery`
 block links every Stage A artefact and whose `gates.G1` records the decision.
-That file is the input to Phase 0. `/plan-feature` reads it and refuses to
-plan work whose `sources` block is empty — which is the same rule Stage A
-enforces at A1, applied one stage later.
+That file is the input to Stage B, which turns the approved Discovery Report
+into a BRD and a PRD — see `stage-b.md`. Work that skips discovery entirely
+(a bug fix, a small change) enters at Phase 0 instead, and `/plan-feature`
+reads the same manifest, refusing to plan anything whose `sources` block is
+empty — the same rule A1 enforces, applied later.
