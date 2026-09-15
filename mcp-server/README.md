@@ -7,9 +7,22 @@ installable Claude Code plugin (agents/commands/skills) that consumes these
 tools; this package is usable on its own from any MCP client (Claude Code,
 Claude Desktop, Cowork, or any other MCP-speaking agent).
 
-17 tools today: 1 Confluence, 12 Jira, 3 GitHub, 1 Claude Code trigger.
-More platforms (GitLab, Microsoft Teams) are planned in later phases —
-see the repo's top-level README for the roadmap.
+28 tools: 5 Confluence, 12 Jira, 4 GitHub, 5 GitLab, 1 Microsoft Teams,
+1 Claude Code trigger.
+
+**How much of that is actually proven.** GitHub is the only platform behind
+which there is a real end-to-end call (issue #2 on this repo, created over
+stdio JSON-RPC against the live API). Confluence, Jira, GitLab and Teams
+have never made a real request from here: every one of their hosts is
+refused by this environment's egress allowlist. They build clean and pass
+`npm test` — a stdio JSON-RPC smoke test plus unit tests over a stubbed
+`fetch` that cover the request shapes and the API asymmetries that are easy
+to get silently wrong — but nothing has confirmed the endpoints behave as
+documented. Make one real call per platform before relying on them, and see
+the top-level README for the full status table.
+
+Run the tests with `npm test` (build + unit + smoke), or
+`npm run test:unit` / `npm run test:smoke` individually.
 
 ## Why this exists
 

@@ -27,7 +27,14 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { createConfluencePage, loadConfigFromEnv } from "./confluence.js";
+import {
+  createConfluencePage,
+  getConfluencePage,
+  listConfluenceSpaces,
+  loadConfigFromEnv,
+  searchConfluence,
+  updateConfluencePage,
+} from "./confluence.js";
 import {
   createGitHubIssue,
   createGitHubPullRequest,
@@ -35,6 +42,14 @@ import {
   loadGitHubConfigFromEnv,
   requestGitHubPrReviewers,
 } from "./github.js";
+import {
+  createGitLabIssue,
+  createGitLabMergeRequest,
+  getGitLabMergeRequest,
+  getGitLabPipelineStatus,
+  loadGitLabConfigFromEnv,
+  requestGitLabMrReviewers,
+} from "./gitlab.js";
 import { runClaudeCodeCommand } from "./claude-code.js";
 import { loadTeamsConfigFromEnv, sendTeamsMessage } from "./teams.js";
 import {
@@ -218,6 +233,93 @@ const RunClaudeCodeCommandInputSchema = z.object({
     .describe("Skip hooks/skills/commands/subagents/plugins/MCP servers/auto-memory/CLAUDE.md. Defaults to false -- the AI-SDLC harness needs these loaded."),
   continueSession: z.boolean().optional().describe("Maps to --continue: resume the most recent session in this cwd."),
   resumeSessionId: z.string().optional().describe("Maps to --resume <id>: resume a specific session."),
+});
+
+// --- Confluence, Phase 2 parity ---------------------------------------------
+
+const GetConfluencePageInputSchema = z.object({
+  pageId: z.string().describe("Numeric Confluence page ID."),
+  bodyFormat: z
+    .enum(["storage", "atlas_doc_format", "view"])
+    .optional()
+    .describe("Body representation to return. Defaults to 'storage' (the editable HTML)."),
+});
+
+const UpdateConfluencePageInputSchema = z.object({
+  pageId: z.string().describe("Numeric Confluence page ID."),
+  title: z.string().describe("Page title. Confluence requires it on every update, even unchanged."),
+  bodyHtml: z.string().describe("Full replacement body in Confluence 'storage format' HTML."),
+  status: z.enum(["current", "draft"]).optional(),
+  expectedCurrentVersion: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      "Optional optimistic-concurrency guard: fail if the page is not at this version. Omit to read-and-increment automatically."
+    ),
+  versionMessage: z.string().optional().describe("Short note recorded in the page's version history."),
+});
+
+const SearchConfluenceInputSchema = z.object({
+  cql: z
+    .string()
+    .describe("CQL query, e.g. 'space = \"DAS\" AND type = page AND text ~ \"onboarding\"'."),
+  limit: z.number().int().positive().optional().describe("Max results. Defaults to 25."),
+});
+
+const ListConfluenceSpacesInputSchema = z.object({
+  keys: z.array(z.string()).optional().describe("Filter to these space keys."),
+  limit: z.number().int().positive().optional().describe("Max results. Defaults to 50."),
+});
+
+// --- GitLab, Phase 3 second half --------------------------------------------
+
+const CreateGitLabMergeRequestInputSchema = z.object({
+  project: z.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  title: z.string().describe("MR title."),
+  sourceBranch: z.string().describe("Branch to merge from."),
+  targetBranch: z.string().describe("Branch to merge into, e.g. 'main'."),
+  description: z.string().optional().describe("MR description (Markdown)."),
+  draft: z
+    .boolean()
+    .optional()
+    .describe("Open as a draft. GitLab has no draft flag; this prefixes the title with 'Draft: '."),
+  removeSourceBranch: z.boolean().optional(),
+  squash: z.boolean().optional(),
+  reviewerUsernames: z
+    .array(z.string())
+    .optional()
+    .describe("GitLab usernames (not display names or emails); resolved to user IDs before the MR is created."),
+});
+
+const GetGitLabMergeRequestInputSchema = z.object({
+  project: z.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  mergeRequestIid: z.number().int().positive().describe("The MR's project-scoped iid (the !123 number), not its global id."),
+});
+
+const RequestGitLabMrReviewersInputSchema = z.object({
+  project: z.string(),
+  mergeRequestIid: z.number().int().positive(),
+  reviewerUsernames: z.array(z.string()).min(1),
+  replace: z
+    .boolean()
+    .optional()
+    .describe(
+      "false (default) adds to the existing reviewers, matching GitHub's semantics. true replaces the list, which is GitLab's native behaviour."
+    ),
+});
+
+const CreateGitLabIssueInputSchema = z.object({
+  project: z.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  title: z.string().describe("Issue title."),
+  description: z.string().optional().describe("Issue body (Markdown)."),
+  labels: z.array(z.string()).optional().describe("Labels; sent to GitLab as a comma-separated string."),
+  assigneeUsernames: z.array(z.string()).optional().describe("GitLab usernames, resolved to user IDs."),
+});
+
+const GetGitLabPipelineStatusInputSchema = z.object({
+  project: z.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  pipelineId: z.number().int().positive().describe("Pipeline ID."),
 });
 
 // ---------------------------------------------------------------------------
@@ -593,6 +695,201 @@ const tools: Record<string, ToolDef> = {
     },
     parse: (a) => SendTeamsMessageInputSchema.parse(a),
     handler: async (input) => sendTeamsMessage(loadTeamsConfigFromEnv(), input),
+  },
+
+  // --- Confluence, Phase 2 parity -------------------------------------------
+
+  get_confluence_page: {
+    description:
+      "Read a Confluence Cloud page by ID, returning its title, version, parent and body. " +
+      "Defaults to 'storage' format -- the same HTML update_confluence_page expects back, so a " +
+      "read-modify-write round trip is lossless. Requires CONFLUENCE_SITE, ATLASSIAN_EMAIL, " +
+      "ATLASSIAN_API_TOKEN.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        pageId: { type: "string", description: "Numeric Confluence page ID." },
+        bodyFormat: {
+          type: "string",
+          enum: ["storage", "atlas_doc_format", "view"],
+          description: "Body representation to return. Defaults to 'storage' (the editable HTML).",
+        },
+      },
+      required: ["pageId"],
+    },
+    parse: (a) => GetConfluencePageInputSchema.parse(a),
+    handler: async (input) => getConfluencePage(loadConfigFromEnv(), input),
+  },
+
+  update_confluence_page: {
+    description:
+      "Replace a Confluence page's title and body. Confluence requires the NEW version number to " +
+      "be exactly current + 1, so this reads the current version and increments it automatically. " +
+      "Pass expectedCurrentVersion to make the update fail instead if someone edited the page " +
+      "since you read it. The body fully replaces the old one -- read the page first and merge, " +
+      "do not send a fragment.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        pageId: { type: "string", description: "Numeric Confluence page ID." },
+        title: { type: "string", description: "Page title. Confluence requires it on every update, even unchanged." },
+        bodyHtml: { type: "string", description: "Full replacement body in Confluence 'storage format' HTML." },
+        status: { type: "string", enum: ["current", "draft"] },
+        expectedCurrentVersion: {
+          type: "number",
+          description: "Optional optimistic-concurrency guard: fail if the page is not at this version.",
+        },
+        versionMessage: { type: "string", description: "Short note recorded in the page's version history." },
+      },
+      required: ["pageId", "title", "bodyHtml"],
+    },
+    parse: (a) => UpdateConfluencePageInputSchema.parse(a),
+    handler: async (input) => updateConfluencePage(loadConfigFromEnv(), input),
+  },
+
+  search_confluence: {
+    description:
+      "Search Confluence with CQL, e.g. 'space = \"DAS\" AND type = page AND text ~ \"onboarding\"'. " +
+      "Uses the v1 search endpoint because Atlassian has not shipped a v2 CQL search route -- that " +
+      "is the documented path, not a fallback to a deprecated API.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        cql: { type: "string", description: "CQL query string." },
+        limit: { type: "number", description: "Max results. Defaults to 25." },
+      },
+      required: ["cql"],
+    },
+    parse: (a) => SearchConfluenceInputSchema.parse(a),
+    handler: async (input) => searchConfluence(loadConfigFromEnv(), input),
+  },
+
+  list_confluence_spaces: {
+    description:
+      "List Confluence spaces the credentials can see, with their numeric IDs -- the lookup that " +
+      "turns a space key like 'DAS' into the spaceId create_confluence_page wants.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        keys: { type: "array", items: { type: "string" }, description: "Filter to these space keys." },
+        limit: { type: "number", description: "Max results. Defaults to 50." },
+      },
+      required: [],
+    },
+    parse: (a) => ListConfluenceSpacesInputSchema.parse(a),
+    handler: async (input) => listConfluenceSpaces(loadConfigFromEnv(), input),
+  },
+
+  // --- GitLab, Phase 3 second half ------------------------------------------
+
+  create_gitlab_merge_request: {
+    description:
+      "Open a GitLab merge request. Requires GITLAB_TOKEN; set GITLAB_API_URL to " +
+      "https://<host>/api/v4 for a self-hosted instance (defaults to gitlab.com). The project is " +
+      "either a numeric ID or the full 'group/subgroup/project' path. GitLab has no draft flag -- " +
+      "draft: true prefixes the title with 'Draft: '. Reviewer usernames are resolved to numeric " +
+      "user IDs first, so an unknown username fails loudly instead of producing an MR with no " +
+      "reviewer.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        title: { type: "string", description: "MR title." },
+        sourceBranch: { type: "string", description: "Branch to merge from." },
+        targetBranch: { type: "string", description: "Branch to merge into, e.g. 'main'." },
+        description: { type: "string", description: "MR description (Markdown)." },
+        draft: { type: "boolean", description: "Open as a draft (prefixes the title with 'Draft: ')." },
+        removeSourceBranch: { type: "boolean" },
+        squash: { type: "boolean" },
+        reviewerUsernames: {
+          type: "array",
+          items: { type: "string" },
+          description: "GitLab usernames, not display names or emails.",
+        },
+      },
+      required: ["project", "title", "sourceBranch", "targetBranch"],
+    },
+    parse: (a) => CreateGitLabMergeRequestInputSchema.parse(a),
+    handler: async (input) => createGitLabMergeRequest(loadGitLabConfigFromEnv(), input),
+  },
+
+  get_gitlab_merge_request: {
+    description:
+      "Read a GitLab merge request by its project-scoped iid (the !123 number). Returns state, " +
+      "draft, merge_status, merged_at, reviewers and web_url -- enough for /notify-merge to " +
+      "confirm an MR really merged before announcing it.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        mergeRequestIid: { type: "number", description: "The MR's project-scoped iid (!123), not its global id." },
+      },
+      required: ["project", "mergeRequestIid"],
+    },
+    parse: (a) => GetGitLabMergeRequestInputSchema.parse(a),
+    handler: async (input) =>
+      getGitLabMergeRequest(loadGitLabConfigFromEnv(), input.project, input.mergeRequestIid),
+  },
+
+  request_gitlab_mr_reviewers: {
+    description:
+      "Assign reviewers to a GitLab merge request by username. GitLab's update endpoint REPLACES " +
+      "the reviewer list; this tool defaults to adding instead (reads the current reviewers and " +
+      "unions them), so calling it twice does not silently un-assign the first reviewer. Pass " +
+      "replace: true for GitLab's native replace behaviour.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string" },
+        mergeRequestIid: { type: "number" },
+        reviewerUsernames: { type: "array", items: { type: "string" }, minItems: 1 },
+        replace: {
+          type: "boolean",
+          description: "false (default) adds to existing reviewers; true replaces the list.",
+        },
+      },
+      required: ["project", "mergeRequestIid", "reviewerUsernames"],
+    },
+    parse: (a) => RequestGitLabMrReviewersInputSchema.parse(a),
+    handler: async (input) => requestGitLabMrReviewers(loadGitLabConfigFromEnv(), input),
+  },
+
+  create_gitlab_issue: {
+    description:
+      "Create a GitLab issue. Labels are sent as GitLab's comma-separated string form; assignee " +
+      "usernames are resolved to numeric user IDs first.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        title: { type: "string", description: "Issue title." },
+        description: { type: "string", description: "Issue body (Markdown)." },
+        labels: { type: "array", items: { type: "string" } },
+        assigneeUsernames: { type: "array", items: { type: "string" } },
+      },
+      required: ["project", "title"],
+    },
+    parse: (a) => CreateGitLabIssueInputSchema.parse(a),
+    handler: async (input) => createGitLabIssue(loadGitLabConfigFromEnv(), input),
+  },
+
+  get_gitlab_pipeline_status: {
+    description:
+      "Read a GitLab pipeline's status -- the counterpart to get_github_workflow_run_status. " +
+      "GitLab folds GitHub's status+conclusion pair into one `status` field " +
+      "(created/pending/running/success/failed/canceled/skipped/manual), so the returned shape " +
+      "deliberately does not fake a `conclusion` key GitLab never sends.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        pipelineId: { type: "number", description: "Pipeline ID." },
+      },
+      required: ["project", "pipelineId"],
+    },
+    parse: (a) => GetGitLabPipelineStatusInputSchema.parse(a),
+    handler: async (input) =>
+      getGitLabPipelineStatus(loadGitLabConfigFromEnv(), input.project, input.pipelineId),
   },
 };
 

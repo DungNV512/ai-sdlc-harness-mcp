@@ -1,0 +1,222 @@
+# vnd.ai-sdlc.traceability/v2
+#
+# The manifest every feature folder carries: docs/specs/<slug>/traceability.yaml.
+# It is the one file that links a piece of work back to why it exists, and
+# forward to the code that implements it and the gate that let it through.
+#
+# WHY THIS FILE HAS A SCHEMA AT ALL
+#
+# Eleven places in this harness read traceability.yaml -- /plan-feature stops
+# without it, /spec reads it, /pr copies its links into the PR body,
+# /implement resolves `module` from it, /ship-feature gates on it -- but until
+# now nothing defined its shape and nothing created it. Every team hand-wrote
+# one, guessed different key names, and then watched later commands fail on
+# fields that were never there. That is the bug this file closes. The shape is
+# now fixed and versioned, exactly like the PR, Jira and SKILL templates.
+#
+# RULES
+#
+#   - `sources` is never empty. A feature with no source is an orphan; the
+#     phase that cannot name its source stops and reports the break rather
+#     than filing one anyway (docs/ai-sdlc/integration.md, Traceability).
+#   - Unknown is written as PENDING with a reason, never omitted and never
+#     guessed. A missing key and a deliberately-unknown one must not look the
+#     same.
+#   - /plan-feature generates this file from the schema. Hand-edit it freely
+#     afterwards -- it is a manifest, not generated output that gets clobbered.
+
+schema: vnd.ai-sdlc.traceability/v2
+
+slug: <feature-slug>              # matches the docs/specs/<slug>/ folder name
+title: <one line, plain language>
+status: draft                     # draft | active | shipped | abandoned
+created: <YYYY-MM-DD>
+owner: <person accountable, not the author of the code>
+
+# ---------------------------------------------------------------------------
+# Where this work came from. At least one entry. Never empty.
+# ---------------------------------------------------------------------------
+sources:
+  - id: <TICKET-KEY or doc id>
+    type: jira                    # jira | confluence | issue | incident | conversation
+    title: <as it reads at the source>
+    url: <link>
+    retrieved: <YYYY-MM-DD>       # when it was last read; stale sources mislead
+
+# Optional. The code module or package this work lands in, when the project
+# has that concept. /implement reads it. Omit the key if it does not apply --
+# do not write "none".
+module: <module-or-package>
+
+# ---------------------------------------------------------------------------
+# Upstream discovery (Stage A). Present only for work that went through
+# discovery; omit the whole block for a bug fix or a small change that
+# entered at Phase 0. See docs/ai-sdlc/stage-a-discovery.md.
+# ---------------------------------------------------------------------------
+discovery:
+  issue_report: <Confluence URL or PENDING — reason>
+  idea_card: <Confluence URL or PENDING — reason>
+  problem_statement_canvas: <Confluence URL or PENDING — reason>
+  market_scan: <Confluence URL or PENDING — reason>
+  feasibility_assessment: <Confluence URL or PENDING — reason>
+  discovery_report: <Confluence URL or PENDING — reason>
+
+# ---------------------------------------------------------------------------
+# Stage B (Define). Present for work that went through B0-B2; omit the whole
+# block for a small change that entered at Phase 0.
+# ---------------------------------------------------------------------------
+define:
+  systems_context: <Confluence URL or PENDING — reason>
+  brd: <Confluence URL or PENDING — reason>
+  prd: <Confluence URL or PENDING — reason>
+  # Regulated domains only. The BRD cannot be finalised until this is
+  # 'received' -- B1's DoD fails without it and G2 cannot pass.
+  legal_status: not_applicable   # not_applicable | requested | received
+  legal_requested: <YYYY-MM-DD, or omit>
+  # Id ranges allocated, so /prd can check coverage and nothing reuses a
+  # number. Ids are permanent: a withdrawn rule is marked withdrawn, never
+  # deleted and never renumbered.
+  rule_ids:    []                # e.g. [BR-001..BR-014, SR-001..SR-003]
+  feature_ids: []                # e.g. [F-001..F-022]
+  ac_ids:      []                # e.g. [AC-001..AC-058]
+  # Result of the two-way BRD<->PRD check. A feature tracing to nothing is
+  # scope creep; a rule covered by nothing is an omission or out of scope.
+  trace_check:
+    uncovered_rules: []
+    untraced_features: []
+
+# ---------------------------------------------------------------------------
+# Stage C (Design).
+# ---------------------------------------------------------------------------
+design:
+  package_design: <Confluence URL or PENDING — reason>
+  integration_design: <Confluence URL or PENDING — reason>
+  function_list: <Confluence URL or PENDING — reason>
+  srs: <Confluence URL or PENDING — reason>
+  ui_spec: <Confluence URL or PENDING — reason>
+  test_strategy: <Confluence URL or PENDING — reason>
+  threat_model: <repo path or PENDING — reason>
+  # Contracts the design needs that do not exist yet, with the team that owns
+  # the other side. Visible at G4 rather than discovered in stage D.
+  blocked_contracts: []
+  # Figma. The key must be a PUBLISHED key -- an 'unsaved-*' key kills every
+  # mcp_ref pointing into the file at once, with no warning and no error.
+  figma_file_key: <published key or PENDING — reason>
+  # USn ids allocated at C2. These travel into Figma frame names, task
+  # filenames and test names: assign once, never renumber.
+  user_story_ids: []             # e.g. [US1-01, US1-02, US2-01]
+  # Coverage thresholds decided at C4, per project -- not inherited.
+  coverage_thresholds:
+    overall: <n>%
+    domain: <n>%
+    enforced_by: <hook or CI job>
+
+# ---------------------------------------------------------------------------
+# Gate decisions. A gate is a human decision point; nothing here is ever
+# written by an AI on its own authority -- /gate records what a human decided,
+# and refuses to record a decision with no minutes to point at.
+# ---------------------------------------------------------------------------
+gates:
+  G1:                             # Feasibility gate, end of Stage A
+    decision: PENDING             # PENDING | GO | NO-GO | NEED-DATA
+    date: <YYYY-MM-DD>
+    decided_by: <C-level name/role who actually decided>
+    minutes: <Confluence URL of the meeting record>
+    # NEED-DATA is not a soft no. It carries a contract:
+    needed_data: <what specifically, or omit>
+    data_owner: <who fetches it, or omit>
+    return_by: <YYYY-MM-DD the gate reconvenes, or omit>
+    # NO-GO carries the reason AND the acknowledgement back to the submitter:
+    reason: <why, or omit>
+    submitter_notified: <YYYY-MM-DD, or omit>
+
+  G2:                             # BRD sign-off, end of B1. TWO PARTS, both required.
+    decision: PENDING             # PENDING | APPROVED | IN-REVIEW | BLOCKED
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    # Part 1 - the C-level approval of Business Context + Business Rules.
+    c_level_approved:
+      by: <who>
+      date: <YYYY-MM-DD>
+    # Part 2 - the Architect walkthrough, >= 60 min sitting together, whose
+    # required output is a WRITTEN confirmation. C-level approval alone does
+    # NOT pass G2; this is the step most often quietly cut.
+    architect_confirmation:
+      by: <Architect name>
+      date: <YYYY-MM-DD>
+      link: <URL of the email or comment - written, not a meeting record>
+    blocked_on: <e.g. legal advice, or omit>
+
+  G3:                             # PRD sign-off, end of B2. TWO PARTS.
+    decision: PENDING             # PENDING | APPROVED | FIX-TOP-3 | NOT-RIPE
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    team_review:                  # 1 hour: Dev + QA + Designer + PM
+      date: <YYYY-MM-DD>
+      attendees: []
+    sprint0_kickoff:              # 90 minutes walking the whole PRD
+      date: <YYYY-MM-DD>
+      attendees: []
+    # Every Q-NNN answered, or carrying an owner and a deadline. Many left
+    # open means the PRD is not ripe and stage C must not start -- record
+    # NOT-RIPE rather than APPROVED with a caveat.
+    open_questions_closed: false
+
+  G4:                             # Design sign-off, end of stage C. PER OUTPUT.
+    decision: PENDING             # PENDING | SIGNED-OFF | DOD-NOT-MET | ANOTHER-ROUND
+    date: <YYYY-MM-DD>
+    minutes: <Confluence URL>
+    # One row per stage C output. Any output short of its DoD means the gate
+    # is DOD-NOT-MET and stage P does not start.
+    outputs:
+      package_design:      { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      integration_design:  { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      function_list:       { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      srs:                 { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      ui_spec:             { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      test_strategy:       { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+      threat_model:        { owner: <name>, dod_met: false, signed: <YYYY-MM-DD> }
+    # G4 switches this on. From here, any change to a signed-off artefact
+    # needs a new version, a reason, and notification of everyone who read
+    # the old one. An architect designing against BRD v1.0 that the PM
+    # quietly edited to v1.1 is the most expensive rework in the process.
+    version_control_active: false
+
+  G5:                             # Human merge gate, end of F3.
+    decision: PENDING             # PENDING | MERGED | CHANGES-REQUESTED | CLOSED
+    date: <YYYY-MM-DD>
+    approved_by: <the human who approved - never the harness>
+    mr_url: <URL>
+
+# ---------------------------------------------------------------------------
+# Delivery. Task ids are local to this file (T1, T2, ...) and are what code,
+# tests and the PR body cite.
+# ---------------------------------------------------------------------------
+tasks:
+  - id: T1
+    summary: <what this task delivers>
+    status: todo                  # todo | doing | done | dropped
+    covers: []                    # requirement ids from spec.md, e.g. [FR-001]
+
+artefacts:
+  plan: docs/specs/<slug>/plan.md
+  spec: docs/specs/<slug>/spec.md
+  adrs: []                        # docs/ai-sdlc/adr/<n>-<slug>.md
+  pr: <URL once opened, else PENDING — not opened yet>
+
+# Filled in as work lands. A task marked done with nothing here is a claim
+# with no evidence behind it -- /review and /pr both treat that as a finding.
+code: []
+  # - path: src/foo/bar.ts
+  #   tasks: [T1]
+
+tests: []
+  # - path: test/foo/bar.test.ts
+  #   covers: [T1]
+
+# Checks that ran, with what they returned. "did not run" is a valid and
+# expected value; "passed" with no command behind it is not.
+evidence:
+  lint: PENDING — not run yet
+  test: PENDING — not run yet
+  security_review: PENDING — not run yet

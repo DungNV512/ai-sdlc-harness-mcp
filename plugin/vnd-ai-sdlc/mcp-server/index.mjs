@@ -16611,8 +16611,8 @@ var Protocol = class {
     this._taskStore = _options?.taskStore;
     this._taskMessageQueue = _options?.taskMessageQueue;
     if (this._taskStore) {
-      this.setRequestHandler(GetTaskRequestSchema, async (request3, extra) => {
-        const task = await this._taskStore.getTask(request3.params.taskId, extra.sessionId);
+      this.setRequestHandler(GetTaskRequestSchema, async (request4, extra) => {
+        const task = await this._taskStore.getTask(request4.params.taskId, extra.sessionId);
         if (!task) {
           throw new McpError(ErrorCode.InvalidParams, "Failed to retrieve task: Task not found");
         }
@@ -16620,9 +16620,9 @@ var Protocol = class {
           ...task
         };
       });
-      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request3, extra) => {
+      this.setRequestHandler(GetTaskPayloadRequestSchema, async (request4, extra) => {
         const handleTaskResult = async () => {
-          const taskId = request3.params.taskId;
+          const taskId = request4.params.taskId;
           if (this._taskMessageQueue) {
             let queuedMessage;
             while (queuedMessage = await this._taskMessageQueue.dequeue(taskId, extra.sessionId)) {
@@ -16673,9 +16673,9 @@ var Protocol = class {
         };
         return await handleTaskResult();
       });
-      this.setRequestHandler(ListTasksRequestSchema, async (request3, extra) => {
+      this.setRequestHandler(ListTasksRequestSchema, async (request4, extra) => {
         try {
-          const { tasks, nextCursor } = await this._taskStore.listTasks(request3.params?.cursor, extra.sessionId);
+          const { tasks, nextCursor } = await this._taskStore.listTasks(request4.params?.cursor, extra.sessionId);
           return {
             tasks,
             nextCursor,
@@ -16685,20 +16685,20 @@ var Protocol = class {
           throw new McpError(ErrorCode.InvalidParams, `Failed to list tasks: ${error2 instanceof Error ? error2.message : String(error2)}`);
         }
       });
-      this.setRequestHandler(CancelTaskRequestSchema, async (request3, extra) => {
+      this.setRequestHandler(CancelTaskRequestSchema, async (request4, extra) => {
         try {
-          const task = await this._taskStore.getTask(request3.params.taskId, extra.sessionId);
+          const task = await this._taskStore.getTask(request4.params.taskId, extra.sessionId);
           if (!task) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request3.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found: ${request4.params.taskId}`);
           }
           if (isTerminal(task.status)) {
             throw new McpError(ErrorCode.InvalidParams, `Cannot cancel task in terminal status: ${task.status}`);
           }
-          await this._taskStore.updateTaskStatus(request3.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
-          this._clearTaskQueue(request3.params.taskId);
-          const cancelledTask = await this._taskStore.getTask(request3.params.taskId, extra.sessionId);
+          await this._taskStore.updateTaskStatus(request4.params.taskId, "cancelled", "Client cancelled task execution.", extra.sessionId);
+          this._clearTaskQueue(request4.params.taskId);
+          const cancelledTask = await this._taskStore.getTask(request4.params.taskId, extra.sessionId);
           if (!cancelledTask) {
-            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request3.params.taskId}`);
+            throw new McpError(ErrorCode.InvalidParams, `Task not found after cancellation: ${request4.params.taskId}`);
           }
           return {
             _meta: {},
@@ -16819,14 +16819,14 @@ var Protocol = class {
     }
     Promise.resolve().then(() => handler(notification)).catch((error2) => this._onerror(new Error(`Uncaught error in notification handler: ${error2}`)));
   }
-  _onrequest(request3, extra) {
-    const handler = this._requestHandlers.get(request3.method) ?? this.fallbackRequestHandler;
+  _onrequest(request4, extra) {
+    const handler = this._requestHandlers.get(request4.method) ?? this.fallbackRequestHandler;
     const capturedTransport = this._transport;
-    const relatedTaskId = request3.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
+    const relatedTaskId = request4.params?._meta?.[RELATED_TASK_META_KEY]?.taskId;
     if (handler === void 0) {
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request3.id,
+        id: request4.id,
         error: {
           code: ErrorCode.MethodNotFound,
           message: "Method not found"
@@ -16844,17 +16844,17 @@ var Protocol = class {
       return;
     }
     const abortController = new AbortController();
-    this._requestHandlerAbortControllers.set(request3.id, abortController);
-    const taskCreationParams = isTaskAugmentedRequestParams(request3.params) ? request3.params.task : void 0;
-    const taskStore = this._taskStore ? this.requestTaskStore(request3, capturedTransport?.sessionId) : void 0;
+    this._requestHandlerAbortControllers.set(request4.id, abortController);
+    const taskCreationParams = isTaskAugmentedRequestParams(request4.params) ? request4.params.task : void 0;
+    const taskStore = this._taskStore ? this.requestTaskStore(request4, capturedTransport?.sessionId) : void 0;
     const fullExtra = {
       signal: abortController.signal,
       sessionId: capturedTransport?.sessionId,
-      _meta: request3.params?._meta,
+      _meta: request4.params?._meta,
       sendNotification: async (notification) => {
         if (abortController.signal.aborted)
           return;
-        const notificationOptions = { relatedRequestId: request3.id };
+        const notificationOptions = { relatedRequestId: request4.id };
         if (relatedTaskId) {
           notificationOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -16864,7 +16864,7 @@ var Protocol = class {
         if (abortController.signal.aborted) {
           throw new McpError(ErrorCode.ConnectionClosed, "Request was cancelled");
         }
-        const requestOptions = { ...options, relatedRequestId: request3.id };
+        const requestOptions = { ...options, relatedRequestId: request4.id };
         if (relatedTaskId && !requestOptions.relatedTask) {
           requestOptions.relatedTask = { taskId: relatedTaskId };
         }
@@ -16875,7 +16875,7 @@ var Protocol = class {
         return await this.request(r, resultSchema, requestOptions);
       },
       authInfo: extra?.authInfo,
-      requestId: request3.id,
+      requestId: request4.id,
       requestInfo: extra?.requestInfo,
       taskId: relatedTaskId,
       taskStore,
@@ -16885,16 +16885,16 @@ var Protocol = class {
     };
     Promise.resolve().then(() => {
       if (taskCreationParams) {
-        this.assertTaskHandlerCapability(request3.method);
+        this.assertTaskHandlerCapability(request4.method);
       }
-    }).then(() => handler(request3, fullExtra)).then(async (result) => {
+    }).then(() => handler(request4, fullExtra)).then(async (result) => {
       if (abortController.signal.aborted) {
         return;
       }
       const response = {
         result,
         jsonrpc: "2.0",
-        id: request3.id
+        id: request4.id
       };
       if (relatedTaskId && this._taskMessageQueue) {
         await this._enqueueTaskMessage(relatedTaskId, {
@@ -16911,7 +16911,7 @@ var Protocol = class {
       }
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request3.id,
+        id: request4.id,
         error: {
           code: Number.isSafeInteger(error2["code"]) ? error2["code"] : ErrorCode.InternalError,
           message: error2.message ?? "Internal error",
@@ -16928,8 +16928,8 @@ var Protocol = class {
         await capturedTransport?.send(errorResponse);
       }
     }).catch((error2) => this._onerror(new Error(`Failed to send response: ${error2}`))).finally(() => {
-      if (this._requestHandlerAbortControllers.get(request3.id) === abortController) {
-        this._requestHandlerAbortControllers.delete(request3.id);
+      if (this._requestHandlerAbortControllers.get(request4.id) === abortController) {
+        this._requestHandlerAbortControllers.delete(request4.id);
       }
     });
   }
@@ -17033,11 +17033,11 @@ var Protocol = class {
    *
    * @experimental Use `client.experimental.tasks.requestStream()` to access this method.
    */
-  async *requestStream(request3, resultSchema, options) {
+  async *requestStream(request4, resultSchema, options) {
     const { task } = options ?? {};
     if (!task) {
       try {
-        const result = await this.request(request3, resultSchema, options);
+        const result = await this.request(request4, resultSchema, options);
         yield { type: "result", result };
       } catch (error2) {
         yield {
@@ -17049,7 +17049,7 @@ var Protocol = class {
     }
     let taskId;
     try {
-      const createResult = await this.request(request3, CreateTaskResultSchema, options);
+      const createResult = await this.request(request4, CreateTaskResultSchema, options);
       if (createResult.task) {
         taskId = createResult.task.taskId;
         yield { type: "taskCreated", task: createResult.task };
@@ -17097,7 +17097,7 @@ var Protocol = class {
    *
    * Do not use this method to emit notifications! Use notification() instead.
    */
-  request(request3, resultSchema, options) {
+  request(request4, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
     return new Promise((resolve, reject) => {
       const earlyReject = (error2) => {
@@ -17109,9 +17109,9 @@ var Protocol = class {
       }
       if (this._options?.enforceStrictCapabilities === true) {
         try {
-          this.assertCapabilityForMethod(request3.method);
+          this.assertCapabilityForMethod(request4.method);
           if (task) {
-            this.assertTaskCapability(request3.method);
+            this.assertTaskCapability(request4.method);
           }
         } catch (e) {
           earlyReject(e);
@@ -17121,16 +17121,16 @@ var Protocol = class {
       options?.signal?.throwIfAborted();
       const messageId = this._requestMessageId++;
       const jsonrpcRequest = {
-        ...request3,
+        ...request4,
         jsonrpc: "2.0",
         id: messageId
       };
       if (options?.onprogress) {
         this._progressHandlers.set(messageId, options.onprogress);
         jsonrpcRequest.params = {
-          ...request3.params,
+          ...request4.params,
           _meta: {
-            ...request3.params?._meta || {},
+            ...request4.params?._meta || {},
             progressToken: messageId
           }
         };
@@ -17334,8 +17334,8 @@ var Protocol = class {
   setRequestHandler(requestSchema, handler) {
     const method = getMethodLiteral(requestSchema);
     this.assertRequestHandlerCapability(method);
-    this._requestHandlers.set(method, (request3, extra) => {
-      const parsed = parseWithCompat(requestSchema, request3);
+    this._requestHandlers.set(method, (request4, extra) => {
+      const parsed = parseWithCompat(requestSchema, request4);
       return Promise.resolve(handler(parsed, extra));
     });
   }
@@ -17450,19 +17450,19 @@ var Protocol = class {
       }, { once: true });
     });
   }
-  requestTaskStore(request3, sessionId) {
+  requestTaskStore(request4, sessionId) {
     const taskStore = this._taskStore;
     if (!taskStore) {
       throw new Error("No task store configured");
     }
     return {
       createTask: async (taskParams) => {
-        if (!request3) {
+        if (!request4) {
           throw new Error("No request provided");
         }
-        return await taskStore.createTask(taskParams, request3.id, {
-          method: request3.method,
-          params: request3.params
+        return await taskStore.createTask(taskParams, request4.id, {
+          method: request4.method,
+          params: request4.params
         }, sessionId);
       },
       getTask: async (taskId) => {
@@ -17623,8 +17623,8 @@ var ExperimentalServerTasks = class {
    *
    * @experimental
    */
-  requestStream(request3, resultSchema, options) {
-    return this._server.requestStream(request3, resultSchema, options);
+  requestStream(request4, resultSchema, options) {
+    return this._server.requestStream(request4, resultSchema, options);
   }
   /**
    * Sends a sampling request and returns an AsyncGenerator that yields response messages.
@@ -17869,12 +17869,12 @@ var Server = class extends Protocol {
     this._capabilities = options?.capabilities ?? {};
     this._instructions = options?.instructions;
     this._jsonSchemaValidator = options?.jsonSchemaValidator ?? new AjvJsonSchemaValidator();
-    this.setRequestHandler(InitializeRequestSchema, (request3) => this._oninitialize(request3));
+    this.setRequestHandler(InitializeRequestSchema, (request4) => this._oninitialize(request4));
     this.setNotificationHandler(InitializedNotificationSchema, () => this.oninitialized?.());
     if (this._capabilities.logging) {
-      this.setRequestHandler(SetLevelRequestSchema, async (request3, extra) => {
+      this.setRequestHandler(SetLevelRequestSchema, async (request4, extra) => {
         const transportSessionId = extra.sessionId || extra.requestInfo?.headers["mcp-session-id"] || void 0;
-        const { level } = request3.params;
+        const { level } = request4.params;
         const parseResult = LoggingLevelSchema.safeParse(level);
         if (parseResult.success) {
           this._loggingLevels.set(transportSessionId, parseResult.data);
@@ -17924,14 +17924,14 @@ var Server = class extends Protocol {
     }
     const method = methodValue;
     if (method === "tools/call") {
-      const wrappedHandler = async (request3, extra) => {
-        const validatedRequest = safeParse2(CallToolRequestSchema, request3);
+      const wrappedHandler = async (request4, extra) => {
+        const validatedRequest = safeParse2(CallToolRequestSchema, request4);
         if (!validatedRequest.success) {
           const errorMessage = validatedRequest.error instanceof Error ? validatedRequest.error.message : String(validatedRequest.error);
           throw new McpError(ErrorCode.InvalidParams, `Invalid tools/call request: ${errorMessage}`);
         }
         const { params } = validatedRequest.data;
-        const result = await Promise.resolve(handler(request3, extra));
+        const result = await Promise.resolve(handler(request4, extra));
         if (params.task) {
           const taskValidationResult = safeParse2(CreateTaskResultSchema, result);
           if (!taskValidationResult.success) {
@@ -18062,10 +18062,10 @@ var Server = class extends Protocol {
     }
     assertToolsCallTaskCapability(this._capabilities.tasks?.requests, method, "Server");
   }
-  async _oninitialize(request3) {
-    const requestedVersion = request3.params.protocolVersion;
-    this._clientCapabilities = request3.params.capabilities;
-    this._clientVersion = request3.params.clientInfo;
+  async _oninitialize(request4) {
+    const requestedVersion = request4.params.protocolVersion;
+    this._clientCapabilities = request4.params.capabilities;
+    this._clientVersion = request4.params.clientInfo;
     const protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion) ? requestedVersion : LATEST_PROTOCOL_VERSION;
     return {
       protocolVersion,
@@ -18330,99 +18330,6 @@ var StdioServerTransport = class {
   }
 };
 
-// src/confluence.ts
-function authHeader(cfg) {
-  const basic = Buffer.from(`${cfg.email}:${cfg.apiToken}`).toString("base64");
-  return `Basic ${basic}`;
-}
-async function confluenceFetch(cfg, path, init = {}) {
-  const url = `${cfg.site.replace(/\/$/, "")}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      Authorization: authHeader(cfg),
-      Accept: "application/json",
-      ...init.headers ?? {}
-    }
-  });
-  return res;
-}
-async function resolveSpaceId(cfg, spaceIdOrKey) {
-  if (/^\d+$/.test(spaceIdOrKey)) {
-    return spaceIdOrKey;
-  }
-  const res = await confluenceFetch(
-    cfg,
-    `/wiki/api/v2/spaces?keys=${encodeURIComponent(spaceIdOrKey)}`
-  );
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(
-      `Confluence API request failed resolving space key '${spaceIdOrKey}': ${res.status} ${res.statusText}
-${body}`
-    );
-  }
-  const data = await res.json();
-  const id = data.results?.[0]?.id;
-  if (!id) {
-    throw new Error(`Could not resolve space key '${spaceIdOrKey}' to a numeric ID.`);
-  }
-  return id;
-}
-async function createConfluencePage(cfg, input) {
-  const spaceId = await resolveSpaceId(cfg, input.spaceId);
-  const payload = {
-    spaceId,
-    status: input.status ?? "current",
-    title: input.title,
-    body: {
-      representation: "storage",
-      value: input.bodyHtml
-    }
-  };
-  if (input.parentId) {
-    payload.parentId = input.parentId;
-  }
-  const res = await confluenceFetch(cfg, "/wiki/api/v2/pages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  const raw = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(
-      `Confluence API request failed creating page '${input.title}': ${res.status} ${res.statusText}
-${JSON.stringify(raw)}`
-    );
-  }
-  const data = raw;
-  const webui = data._links?.webui ?? "";
-  const url = webui ? cfg.site.replace(/\/$/, "") + webui : "";
-  return {
-    id: data.id,
-    title: data.title,
-    version: data.version?.number ?? 0,
-    url,
-    raw: data
-  };
-}
-function loadConfigFromEnv() {
-  const site = process.env.CONFLUENCE_SITE;
-  const email2 = process.env.ATLASSIAN_EMAIL;
-  const apiToken = process.env.ATLASSIAN_API_TOKEN;
-  const missing = [
-    !site && "CONFLUENCE_SITE",
-    !email2 && "ATLASSIAN_EMAIL",
-    !apiToken && "ATLASSIAN_API_TOKEN"
-  ].filter(Boolean);
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variable(s): ${missing.join(", ")}. See .env.example.`
-    );
-  }
-  return { site, email: email2, apiToken };
-}
-
 // src/lib/http.ts
 var RETRY_DELAYS_MS = [2e3, 5e3];
 var MAX_ATTEMPTS = 1 + RETRY_DELAYS_MS.length;
@@ -18467,6 +18374,192 @@ async function readJsonBody(res) {
   }
 }
 
+// src/confluence.ts
+function authHeaders(cfg) {
+  return {
+    Authorization: basicAuthHeader(cfg.email, cfg.apiToken),
+    Accept: "application/json"
+  };
+}
+async function confluenceFetch(cfg, path, init = {}) {
+  const url = `${cfg.site.replace(/\/$/, "")}${path}`;
+  return fetchWithRetry(url, {
+    ...init,
+    headers: { ...authHeaders(cfg), ...init.headers ?? {} }
+  });
+}
+async function requestJson(cfg, path, init = {}) {
+  const res = await confluenceFetch(cfg, path, init);
+  const data = await readJsonBody(res);
+  return { ok: res.ok, status: res.status, data };
+}
+function assertOk(result, action) {
+  if (!result.ok) {
+    throw new Error(
+      `Confluence API request failed for ${action}: HTTP ${result.status}
+${JSON.stringify(result.data)}`
+    );
+  }
+}
+function webUrl(cfg, links) {
+  const webui = links?.webui ?? "";
+  return webui ? cfg.site.replace(/\/$/, "") + webui : "";
+}
+async function resolveSpaceId(cfg, spaceIdOrKey) {
+  if (/^\d+$/.test(spaceIdOrKey)) {
+    return spaceIdOrKey;
+  }
+  const result = await requestJson(
+    cfg,
+    `/wiki/api/v2/spaces?keys=${encodeURIComponent(spaceIdOrKey)}`
+  );
+  assertOk(result, `resolve space key '${spaceIdOrKey}'`);
+  const data = result.data;
+  const id = data.results?.[0]?.id;
+  if (!id) {
+    throw new Error(`Could not resolve space key '${spaceIdOrKey}' to a numeric ID.`);
+  }
+  return id;
+}
+async function createConfluencePage(cfg, input) {
+  const spaceId = await resolveSpaceId(cfg, input.spaceId);
+  const payload = {
+    spaceId,
+    status: input.status ?? "current",
+    title: input.title,
+    body: {
+      representation: "storage",
+      value: input.bodyHtml
+    }
+  };
+  if (input.parentId) {
+    payload.parentId = input.parentId;
+  }
+  const result = await requestJson(cfg, "/wiki/api/v2/pages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  assertOk(result, `create page '${input.title}'`);
+  const data = result.data;
+  return {
+    id: data.id,
+    title: data.title,
+    version: data.version?.number ?? 0,
+    url: webUrl(cfg, data._links),
+    raw: data
+  };
+}
+async function getConfluencePage(cfg, input) {
+  const fmt = input.bodyFormat ?? "storage";
+  const result = await requestJson(
+    cfg,
+    `/wiki/api/v2/pages/${encodeURIComponent(input.pageId)}?body-format=${fmt}`
+  );
+  assertOk(result, `get page ${input.pageId}`);
+  const data = result.data;
+  return {
+    id: data.id,
+    title: data.title,
+    status: data.status,
+    spaceId: data.spaceId,
+    parentId: data.parentId,
+    version: data.version?.number,
+    body: data.body?.[fmt]?.value ?? data.body?.storage?.value ?? null,
+    url: webUrl(cfg, data._links)
+  };
+}
+async function updateConfluencePage(cfg, input) {
+  const current = await getConfluencePage(cfg, { pageId: input.pageId });
+  const currentVersion = current.version ?? 0;
+  if (input.expectedCurrentVersion !== void 0 && input.expectedCurrentVersion !== currentVersion) {
+    throw new Error(
+      `Confluence page ${input.pageId} is at version ${currentVersion}, not the expected ${input.expectedCurrentVersion}. Someone edited it since you read it -- re-read the page, merge your change, and retry.`
+    );
+  }
+  const payload = {
+    id: input.pageId,
+    status: input.status ?? current.status ?? "current",
+    title: input.title,
+    body: {
+      representation: "storage",
+      value: input.bodyHtml
+    },
+    version: {
+      number: currentVersion + 1,
+      ...input.versionMessage ? { message: input.versionMessage } : {}
+    }
+  };
+  const result = await requestJson(cfg, `/wiki/api/v2/pages/${encodeURIComponent(input.pageId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  assertOk(result, `update page ${input.pageId}`);
+  const data = result.data;
+  return {
+    id: data.id,
+    title: data.title,
+    version: data.version?.number ?? currentVersion + 1,
+    url: webUrl(cfg, data._links),
+    raw: data
+  };
+}
+async function searchConfluence(cfg, input) {
+  const limit = input.limit ?? 25;
+  const result = await requestJson(
+    cfg,
+    `/wiki/rest/api/search?cql=${encodeURIComponent(input.cql)}&limit=${limit}`
+  );
+  assertOk(result, `search with CQL '${input.cql}'`);
+  const data = result.data;
+  return {
+    size: data.size ?? data.results?.length ?? 0,
+    results: (data.results ?? []).map((r) => ({
+      id: r.content?.id ?? r.id,
+      type: r.content?.type ?? r.entityType,
+      title: r.content?.title ?? r.title,
+      spaceKey: r.resultGlobalContainer?.title ?? r.space?.key,
+      excerpt: r.excerpt,
+      url: r.url ? cfg.site.replace(/\/$/, "") + "/wiki" + r.url : void 0
+    }))
+  };
+}
+async function listConfluenceSpaces(cfg, input = {}) {
+  const params = new URLSearchParams();
+  if (input.keys && input.keys.length > 0) params.set("keys", input.keys.join(","));
+  params.set("limit", String(input.limit ?? 50));
+  const result = await requestJson(cfg, `/wiki/api/v2/spaces?${params.toString()}`);
+  assertOk(result, "list spaces");
+  const data = result.data;
+  return {
+    results: (data.results ?? []).map((s) => ({
+      id: s.id,
+      key: s.key,
+      name: s.name,
+      type: s.type,
+      status: s.status,
+      homepageId: s.homepageId
+    }))
+  };
+}
+function loadConfigFromEnv() {
+  const site = process.env.CONFLUENCE_SITE;
+  const email2 = process.env.ATLASSIAN_EMAIL;
+  const apiToken = process.env.ATLASSIAN_API_TOKEN;
+  const missing = [
+    !site && "CONFLUENCE_SITE",
+    !email2 && "ATLASSIAN_EMAIL",
+    !apiToken && "ATLASSIAN_API_TOKEN"
+  ].filter(Boolean);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variable(s): ${missing.join(", ")}. See .env.example.`
+    );
+  }
+  return { site, email: email2, apiToken };
+}
+
 // src/github.ts
 function loadGitHubConfigFromEnv() {
   const apiUrl = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/$/, "");
@@ -18476,7 +18569,7 @@ function loadGitHubConfigFromEnv() {
   }
   return { apiUrl, token };
 }
-function authHeaders(cfg) {
+function authHeaders2(cfg) {
   return {
     Authorization: `Bearer ${cfg.token}`,
     Accept: "application/vnd.github+json",
@@ -18487,12 +18580,12 @@ async function request(cfg, path, init = {}) {
   const url = `${cfg.apiUrl}${path}`;
   const res = await fetchWithRetry(url, {
     ...init,
-    headers: { ...authHeaders(cfg), ...init.headers ?? {} }
+    headers: { ...authHeaders2(cfg), ...init.headers ?? {} }
   });
   const data = await readJsonBody(res);
   return { ok: res.ok, status: res.status, data };
 }
-function assertOk(result, action) {
+function assertOk2(result, action) {
   if (!result.ok) {
     throw new Error(
       `GitHub API request failed for ${action}: HTTP ${result.status}
@@ -18507,7 +18600,7 @@ async function createGitHubPullRequest(cfg, input) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  assertOk(result, `create pull request in ${owner}/${repo}`);
+  assertOk2(result, `create pull request in ${owner}/${repo}`);
   return result.data;
 }
 async function createGitHubIssue(cfg, input) {
@@ -18517,14 +18610,14 @@ async function createGitHubIssue(cfg, input) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  assertOk(result, `create issue in ${owner}/${repo}`);
+  assertOk2(result, `create issue in ${owner}/${repo}`);
   return result.data;
 }
 async function getGitHubWorkflowRunStatus(cfg, owner, repo, runId) {
   const result = await request(cfg, `/repos/${owner}/${repo}/actions/runs/${runId}`, {
     method: "GET"
   });
-  assertOk(result, `get workflow run status for ${owner}/${repo}#${runId}`);
+  assertOk2(result, `get workflow run status for ${owner}/${repo}#${runId}`);
   const data = result.data;
   return {
     status: data.status,
@@ -18545,12 +18638,196 @@ async function requestGitHubPrReviewers(cfg, input) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  assertOk(result, `request reviewers on ${owner}/${repo}#${pullNumber}`);
+  assertOk2(result, `request reviewers on ${owner}/${repo}#${pullNumber}`);
   const data = result.data;
   return {
     number: data.number,
     html_url: data.html_url,
     requested_reviewers: data.requested_reviewers
+  };
+}
+
+// src/gitlab.ts
+function loadGitLabConfigFromEnv() {
+  const apiUrl = (process.env.GITLAB_API_URL || "https://gitlab.com/api/v4").replace(/\/$/, "");
+  const token = process.env.GITLAB_TOKEN;
+  if (!token) {
+    throw new Error("Missing required environment variable(s): GITLAB_TOKEN. See .env.example.");
+  }
+  return { apiUrl, token };
+}
+function authHeaders3(cfg) {
+  return {
+    "PRIVATE-TOKEN": cfg.token,
+    Accept: "application/json"
+  };
+}
+function encodeProjectId(project) {
+  if (/^\d+$/.test(project)) return project;
+  return encodeURIComponent(project);
+}
+function applyDraftPrefix(title, draft) {
+  const alreadyDraft = /^draft:\s*/i.test(title);
+  if (draft) {
+    return alreadyDraft ? title : `Draft: ${title}`;
+  }
+  return title;
+}
+async function request2(cfg, path, init = {}) {
+  const url = `${cfg.apiUrl}${path}`;
+  const res = await fetchWithRetry(url, {
+    ...init,
+    headers: { ...authHeaders3(cfg), ...init.headers ?? {} }
+  });
+  const data = await readJsonBody(res);
+  return { ok: res.ok, status: res.status, data };
+}
+function assertOk3(result, action) {
+  if (!result.ok) {
+    throw new Error(
+      `GitLab API request failed for ${action}: HTTP ${result.status}
+${JSON.stringify(result.data)}`
+    );
+  }
+}
+async function createGitLabMergeRequest(cfg, input) {
+  const payload = {
+    title: applyDraftPrefix(input.title, input.draft),
+    source_branch: input.sourceBranch,
+    target_branch: input.targetBranch
+  };
+  if (input.description !== void 0) payload.description = input.description;
+  if (input.removeSourceBranch !== void 0) payload.remove_source_branch = input.removeSourceBranch;
+  if (input.squash !== void 0) payload.squash = input.squash;
+  if (input.reviewerUsernames && input.reviewerUsernames.length > 0) {
+    payload.reviewer_ids = await resolveUserIds(cfg, input.reviewerUsernames);
+  }
+  const result = await request2(cfg, `/projects/${encodeProjectId(input.project)}/merge_requests`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  assertOk3(result, `create merge request in ${input.project}`);
+  const data = result.data;
+  return {
+    iid: data.iid,
+    id: data.id,
+    title: data.title,
+    state: data.state,
+    draft: data.draft,
+    web_url: data.web_url,
+    source_branch: data.source_branch,
+    target_branch: data.target_branch,
+    reviewers: data.reviewers
+  };
+}
+async function getGitLabMergeRequest(cfg, project, mergeRequestIid) {
+  const result = await request2(
+    cfg,
+    `/projects/${encodeProjectId(project)}/merge_requests/${mergeRequestIid}`,
+    { method: "GET" }
+  );
+  assertOk3(result, `get merge request ${project}!${mergeRequestIid}`);
+  const data = result.data;
+  return {
+    iid: data.iid,
+    title: data.title,
+    state: data.state,
+    draft: data.draft,
+    merged_at: data.merged_at,
+    merge_status: data.merge_status,
+    web_url: data.web_url,
+    source_branch: data.source_branch,
+    target_branch: data.target_branch,
+    reviewers: data.reviewers,
+    author: data.author
+  };
+}
+async function resolveUserIds(cfg, usernames) {
+  const ids = [];
+  for (const username of usernames) {
+    const result = await request2(cfg, `/users?username=${encodeURIComponent(username)}`, {
+      method: "GET"
+    });
+    assertOk3(result, `look up GitLab user '${username}'`);
+    const users = result.data;
+    if (!Array.isArray(users) || users.length === 0) {
+      throw new Error(
+        `GitLab user '${username}' not found. Reviewer usernames must be GitLab usernames, not display names or emails.`
+      );
+    }
+    ids.push(users[0].id);
+  }
+  return ids;
+}
+async function requestGitLabMrReviewers(cfg, input) {
+  if (!input.reviewerUsernames || input.reviewerUsernames.length === 0) {
+    throw new Error("requestGitLabMrReviewers needs at least one reviewer username.");
+  }
+  const requestedIds = await resolveUserIds(cfg, input.reviewerUsernames);
+  let finalIds = requestedIds;
+  if (!input.replace) {
+    const current = await getGitLabMergeRequest(cfg, input.project, input.mergeRequestIid);
+    const existingIds = (current.reviewers ?? []).map((r) => r.id);
+    finalIds = Array.from(/* @__PURE__ */ new Set([...existingIds, ...requestedIds]));
+  }
+  const result = await request2(
+    cfg,
+    `/projects/${encodeProjectId(input.project)}/merge_requests/${input.mergeRequestIid}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewer_ids: finalIds })
+    }
+  );
+  assertOk3(result, `request reviewers on ${input.project}!${input.mergeRequestIid}`);
+  const data = result.data;
+  return {
+    iid: data.iid,
+    web_url: data.web_url,
+    reviewers: data.reviewers
+  };
+}
+async function createGitLabIssue(cfg, input) {
+  const payload = { title: input.title };
+  if (input.description !== void 0) payload.description = input.description;
+  if (input.labels && input.labels.length > 0) payload.labels = input.labels.join(",");
+  if (input.assigneeUsernames && input.assigneeUsernames.length > 0) {
+    payload.assignee_ids = await resolveUserIds(cfg, input.assigneeUsernames);
+  }
+  const result = await request2(cfg, `/projects/${encodeProjectId(input.project)}/issues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  assertOk3(result, `create issue in ${input.project}`);
+  const data = result.data;
+  return {
+    iid: data.iid,
+    id: data.id,
+    title: data.title,
+    state: data.state,
+    web_url: data.web_url,
+    labels: data.labels,
+    assignees: data.assignees
+  };
+}
+async function getGitLabPipelineStatus(cfg, project, pipelineId) {
+  const result = await request2(
+    cfg,
+    `/projects/${encodeProjectId(project)}/pipelines/${pipelineId}`,
+    { method: "GET" }
+  );
+  assertOk3(result, `get pipeline status for ${project}#${pipelineId}`);
+  const data = result.data;
+  return {
+    id: data.id,
+    status: data.status,
+    ref: data.ref,
+    sha: data.sha,
+    web_url: data.web_url,
+    created_at: data.created_at,
+    finished_at: data.finished_at
   };
 }
 
@@ -18708,22 +18985,22 @@ function loadJiraConfigFromEnv() {
   }
   return { site, email: email2, apiToken };
 }
-function authHeaders2(cfg) {
+function authHeaders4(cfg) {
   return {
     Authorization: basicAuthHeader(cfg.email, cfg.apiToken),
     Accept: "application/json"
   };
 }
-async function request2(cfg, path, init = {}) {
+async function request3(cfg, path, init = {}) {
   const url = `${cfg.site.replace(/\/$/, "")}${path}`;
   const res = await fetchWithRetry(url, {
     ...init,
-    headers: { ...authHeaders2(cfg), ...init.headers ?? {} }
+    headers: { ...authHeaders4(cfg), ...init.headers ?? {} }
   });
   const data = await readJsonBody(res);
   return { ok: res.ok, status: res.status, data };
 }
-function assertOk2(result, action) {
+function assertOk4(result, action) {
   if (!result.ok) {
     throw new Error(
       `Jira API request failed for ${action}: HTTP ${result.status}
@@ -18754,28 +19031,28 @@ async function createJiraIssue(cfg, input) {
   if (input.assigneeId) fields.assignee = { id: input.assigneeId };
   if (input.priorityId) fields.priority = { id: input.priorityId };
   if (input.labels && input.labels.length > 0) fields.labels = input.labels;
-  const result = await request2(cfg, "/rest/api/3/issue", {
+  const result = await request3(cfg, "/rest/api/3/issue", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ fields })
   });
-  assertOk2(result, `create issue in ${input.projectKey}`);
+  assertOk4(result, `create issue in ${input.projectKey}`);
   const data = result.data;
   return data;
 }
 async function updateJiraIssue(cfg, issueKey, body) {
-  const result = await request2(cfg, `/rest/api/3/issue/${issueKey}`, {
+  const result = await request3(cfg, `/rest/api/3/issue/${issueKey}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  assertOk2(result, `update issue ${issueKey}`);
+  assertOk4(result, `update issue ${issueKey}`);
 }
 async function getJiraIssue(cfg, issueKey, fields = "*all", expand) {
   let path = `/rest/api/3/issue/${issueKey}?fields=${encodeURIComponent(fields)}`;
   if (expand) path += `&expand=${encodeURIComponent(expand)}`;
-  const result = await request2(cfg, path);
-  assertOk2(result, `fetch issue ${issueKey}`);
+  const result = await request3(cfg, path);
+  assertOk4(result, `fetch issue ${issueKey}`);
   return result.data;
 }
 async function searchJiraIssues(cfg, input) {
@@ -18785,30 +19062,30 @@ async function searchJiraIssues(cfg, input) {
     fields: input.fields ?? ["summary", "status", "assignee", "issuetype", "priority"]
   };
   if (input.nextPageToken) body.nextPageToken = input.nextPageToken;
-  const result = await request2(cfg, "/rest/api/3/search/jql", {
+  const result = await request3(cfg, "/rest/api/3/search/jql", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  assertOk2(result, "search issues");
+  assertOk4(result, "search issues");
   return result.data;
 }
 async function addJiraComment(cfg, issueKey, text) {
-  const result = await request2(cfg, `/rest/api/3/issue/${issueKey}/comment`, {
+  const result = await request3(cfg, `/rest/api/3/issue/${issueKey}/comment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ body: adfSingleParagraph(text) })
   });
-  assertOk2(result, `add comment on ${issueKey}`);
+  assertOk4(result, `add comment on ${issueKey}`);
   return result.data;
 }
 async function updateJiraComment(cfg, issueKey, commentId, text) {
-  const result = await request2(cfg, `/rest/api/3/issue/${issueKey}/comment/${commentId}`, {
+  const result = await request3(cfg, `/rest/api/3/issue/${issueKey}/comment/${commentId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ body: adfMultiParagraph(text) })
   });
-  assertOk2(result, `update comment ${commentId} on ${issueKey}`);
+  assertOk4(result, `update comment ${commentId} on ${issueKey}`);
   return result.data;
 }
 async function transitionJiraIssue(cfg, issueKey, opts) {
@@ -18820,20 +19097,20 @@ async function transitionJiraIssue(cfg, issueKey, opts) {
   else if (opts.transitionName) transition.name = opts.transitionName;
   const body = { transition };
   if (opts.resolution) body.fields = { resolution: { name: opts.resolution } };
-  const result = await request2(cfg, `/rest/api/3/issue/${issueKey}/transitions`, {
+  const result = await request3(cfg, `/rest/api/3/issue/${issueKey}/transitions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  assertOk2(result, `transition ${issueKey}`);
+  assertOk4(result, `transition ${issueKey}`);
 }
 async function getJiraTransitions(cfg, issueKey) {
-  const result = await request2(cfg, `/rest/api/3/issue/${issueKey}/transitions`);
-  assertOk2(result, `list transitions for ${issueKey}`);
+  const result = await request3(cfg, `/rest/api/3/issue/${issueKey}/transitions`);
+  assertOk4(result, `list transitions for ${issueKey}`);
   return result.data;
 }
 async function linkJiraIssues(cfg, outwardKey, inwardKey, linkType = "Relates") {
-  const result = await request2(cfg, "/rest/api/3/issueLink", {
+  const result = await request3(cfg, "/rest/api/3/issueLink", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -18842,26 +19119,26 @@ async function linkJiraIssues(cfg, outwardKey, inwardKey, linkType = "Relates") 
       type: { name: linkType }
     })
   });
-  assertOk2(result, `link ${outwardKey} -> ${inwardKey}`);
+  assertOk4(result, `link ${outwardKey} -> ${inwardKey}`);
 }
 async function listJiraBoards(cfg, projectKey, boardType) {
   const params = new URLSearchParams();
   if (projectKey) params.set("projectKeyOrId", projectKey);
   if (boardType) params.set("type", boardType);
   const qs = params.toString();
-  const result = await request2(cfg, `/rest/agile/1.0/board${qs ? `?${qs}` : ""}`);
-  assertOk2(result, "list boards");
+  const result = await request3(cfg, `/rest/agile/1.0/board${qs ? `?${qs}` : ""}`);
+  assertOk4(result, "list boards");
   return result.data;
 }
 async function listJiraSprints(cfg, boardId, state) {
   const qs = state ? `?state=${encodeURIComponent(state)}` : "";
-  const result = await request2(cfg, `/rest/agile/1.0/board/${boardId}/sprint${qs}`);
-  assertOk2(result, `list sprints for board ${boardId}`);
+  const result = await request3(cfg, `/rest/agile/1.0/board/${boardId}/sprint${qs}`);
+  assertOk4(result, `list sprints for board ${boardId}`);
   return result.data;
 }
 async function listJiraIssueTypes(cfg, projectKey) {
-  const result = await request2(cfg, `/rest/api/3/issue/createmeta/${projectKey}/issuetypes`);
-  assertOk2(result, `list issue types for ${projectKey}`);
+  const result = await request3(cfg, `/rest/api/3/issue/createmeta/${projectKey}/issuetypes`);
+  assertOk4(result, `list issue types for ${projectKey}`);
   return result.data;
 }
 
@@ -18980,6 +19257,62 @@ var RunClaudeCodeCommandInputSchema = external_exports.object({
   bare: external_exports.boolean().optional().describe("Skip hooks/skills/commands/subagents/plugins/MCP servers/auto-memory/CLAUDE.md. Defaults to false -- the AI-SDLC harness needs these loaded."),
   continueSession: external_exports.boolean().optional().describe("Maps to --continue: resume the most recent session in this cwd."),
   resumeSessionId: external_exports.string().optional().describe("Maps to --resume <id>: resume a specific session.")
+});
+var GetConfluencePageInputSchema = external_exports.object({
+  pageId: external_exports.string().describe("Numeric Confluence page ID."),
+  bodyFormat: external_exports.enum(["storage", "atlas_doc_format", "view"]).optional().describe("Body representation to return. Defaults to 'storage' (the editable HTML).")
+});
+var UpdateConfluencePageInputSchema = external_exports.object({
+  pageId: external_exports.string().describe("Numeric Confluence page ID."),
+  title: external_exports.string().describe("Page title. Confluence requires it on every update, even unchanged."),
+  bodyHtml: external_exports.string().describe("Full replacement body in Confluence 'storage format' HTML."),
+  status: external_exports.enum(["current", "draft"]).optional(),
+  expectedCurrentVersion: external_exports.number().int().optional().describe(
+    "Optional optimistic-concurrency guard: fail if the page is not at this version. Omit to read-and-increment automatically."
+  ),
+  versionMessage: external_exports.string().optional().describe("Short note recorded in the page's version history.")
+});
+var SearchConfluenceInputSchema = external_exports.object({
+  cql: external_exports.string().describe(`CQL query, e.g. 'space = "DAS" AND type = page AND text ~ "onboarding"'.`),
+  limit: external_exports.number().int().positive().optional().describe("Max results. Defaults to 25.")
+});
+var ListConfluenceSpacesInputSchema = external_exports.object({
+  keys: external_exports.array(external_exports.string()).optional().describe("Filter to these space keys."),
+  limit: external_exports.number().int().positive().optional().describe("Max results. Defaults to 50.")
+});
+var CreateGitLabMergeRequestInputSchema = external_exports.object({
+  project: external_exports.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  title: external_exports.string().describe("MR title."),
+  sourceBranch: external_exports.string().describe("Branch to merge from."),
+  targetBranch: external_exports.string().describe("Branch to merge into, e.g. 'main'."),
+  description: external_exports.string().optional().describe("MR description (Markdown)."),
+  draft: external_exports.boolean().optional().describe("Open as a draft. GitLab has no draft flag; this prefixes the title with 'Draft: '."),
+  removeSourceBranch: external_exports.boolean().optional(),
+  squash: external_exports.boolean().optional(),
+  reviewerUsernames: external_exports.array(external_exports.string()).optional().describe("GitLab usernames (not display names or emails); resolved to user IDs before the MR is created.")
+});
+var GetGitLabMergeRequestInputSchema = external_exports.object({
+  project: external_exports.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  mergeRequestIid: external_exports.number().int().positive().describe("The MR's project-scoped iid (the !123 number), not its global id.")
+});
+var RequestGitLabMrReviewersInputSchema = external_exports.object({
+  project: external_exports.string(),
+  mergeRequestIid: external_exports.number().int().positive(),
+  reviewerUsernames: external_exports.array(external_exports.string()).min(1),
+  replace: external_exports.boolean().optional().describe(
+    "false (default) adds to the existing reviewers, matching GitHub's semantics. true replaces the list, which is GitLab's native behaviour."
+  )
+});
+var CreateGitLabIssueInputSchema = external_exports.object({
+  project: external_exports.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  title: external_exports.string().describe("Issue title."),
+  description: external_exports.string().optional().describe("Issue body (Markdown)."),
+  labels: external_exports.array(external_exports.string()).optional().describe("Labels; sent to GitLab as a comma-separated string."),
+  assigneeUsernames: external_exports.array(external_exports.string()).optional().describe("GitLab usernames, resolved to user IDs.")
+});
+var GetGitLabPipelineStatusInputSchema = external_exports.object({
+  project: external_exports.string().describe("Numeric project ID, or the full path 'group/subgroup/project'."),
+  pipelineId: external_exports.number().int().positive().describe("Pipeline ID.")
 });
 var tools = {
   create_confluence_page: {
@@ -19290,6 +19623,155 @@ var tools = {
     },
     parse: (a) => SendTeamsMessageInputSchema.parse(a),
     handler: async (input) => sendTeamsMessage(loadTeamsConfigFromEnv(), input)
+  },
+  // --- Confluence, Phase 2 parity -------------------------------------------
+  get_confluence_page: {
+    description: "Read a Confluence Cloud page by ID, returning its title, version, parent and body. Defaults to 'storage' format -- the same HTML update_confluence_page expects back, so a read-modify-write round trip is lossless. Requires CONFLUENCE_SITE, ATLASSIAN_EMAIL, ATLASSIAN_API_TOKEN.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        pageId: { type: "string", description: "Numeric Confluence page ID." },
+        bodyFormat: {
+          type: "string",
+          enum: ["storage", "atlas_doc_format", "view"],
+          description: "Body representation to return. Defaults to 'storage' (the editable HTML)."
+        }
+      },
+      required: ["pageId"]
+    },
+    parse: (a) => GetConfluencePageInputSchema.parse(a),
+    handler: async (input) => getConfluencePage(loadConfigFromEnv(), input)
+  },
+  update_confluence_page: {
+    description: "Replace a Confluence page's title and body. Confluence requires the NEW version number to be exactly current + 1, so this reads the current version and increments it automatically. Pass expectedCurrentVersion to make the update fail instead if someone edited the page since you read it. The body fully replaces the old one -- read the page first and merge, do not send a fragment.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        pageId: { type: "string", description: "Numeric Confluence page ID." },
+        title: { type: "string", description: "Page title. Confluence requires it on every update, even unchanged." },
+        bodyHtml: { type: "string", description: "Full replacement body in Confluence 'storage format' HTML." },
+        status: { type: "string", enum: ["current", "draft"] },
+        expectedCurrentVersion: {
+          type: "number",
+          description: "Optional optimistic-concurrency guard: fail if the page is not at this version."
+        },
+        versionMessage: { type: "string", description: "Short note recorded in the page's version history." }
+      },
+      required: ["pageId", "title", "bodyHtml"]
+    },
+    parse: (a) => UpdateConfluencePageInputSchema.parse(a),
+    handler: async (input) => updateConfluencePage(loadConfigFromEnv(), input)
+  },
+  search_confluence: {
+    description: `Search Confluence with CQL, e.g. 'space = "DAS" AND type = page AND text ~ "onboarding"'. Uses the v1 search endpoint because Atlassian has not shipped a v2 CQL search route -- that is the documented path, not a fallback to a deprecated API.`,
+    jsonSchema: {
+      type: "object",
+      properties: {
+        cql: { type: "string", description: "CQL query string." },
+        limit: { type: "number", description: "Max results. Defaults to 25." }
+      },
+      required: ["cql"]
+    },
+    parse: (a) => SearchConfluenceInputSchema.parse(a),
+    handler: async (input) => searchConfluence(loadConfigFromEnv(), input)
+  },
+  list_confluence_spaces: {
+    description: "List Confluence spaces the credentials can see, with their numeric IDs -- the lookup that turns a space key like 'DAS' into the spaceId create_confluence_page wants.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        keys: { type: "array", items: { type: "string" }, description: "Filter to these space keys." },
+        limit: { type: "number", description: "Max results. Defaults to 50." }
+      },
+      required: []
+    },
+    parse: (a) => ListConfluenceSpacesInputSchema.parse(a),
+    handler: async (input) => listConfluenceSpaces(loadConfigFromEnv(), input)
+  },
+  // --- GitLab, Phase 3 second half ------------------------------------------
+  create_gitlab_merge_request: {
+    description: "Open a GitLab merge request. Requires GITLAB_TOKEN; set GITLAB_API_URL to https://<host>/api/v4 for a self-hosted instance (defaults to gitlab.com). The project is either a numeric ID or the full 'group/subgroup/project' path. GitLab has no draft flag -- draft: true prefixes the title with 'Draft: '. Reviewer usernames are resolved to numeric user IDs first, so an unknown username fails loudly instead of producing an MR with no reviewer.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        title: { type: "string", description: "MR title." },
+        sourceBranch: { type: "string", description: "Branch to merge from." },
+        targetBranch: { type: "string", description: "Branch to merge into, e.g. 'main'." },
+        description: { type: "string", description: "MR description (Markdown)." },
+        draft: { type: "boolean", description: "Open as a draft (prefixes the title with 'Draft: ')." },
+        removeSourceBranch: { type: "boolean" },
+        squash: { type: "boolean" },
+        reviewerUsernames: {
+          type: "array",
+          items: { type: "string" },
+          description: "GitLab usernames, not display names or emails."
+        }
+      },
+      required: ["project", "title", "sourceBranch", "targetBranch"]
+    },
+    parse: (a) => CreateGitLabMergeRequestInputSchema.parse(a),
+    handler: async (input) => createGitLabMergeRequest(loadGitLabConfigFromEnv(), input)
+  },
+  get_gitlab_merge_request: {
+    description: "Read a GitLab merge request by its project-scoped iid (the !123 number). Returns state, draft, merge_status, merged_at, reviewers and web_url -- enough for /notify-merge to confirm an MR really merged before announcing it.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        mergeRequestIid: { type: "number", description: "The MR's project-scoped iid (!123), not its global id." }
+      },
+      required: ["project", "mergeRequestIid"]
+    },
+    parse: (a) => GetGitLabMergeRequestInputSchema.parse(a),
+    handler: async (input) => getGitLabMergeRequest(loadGitLabConfigFromEnv(), input.project, input.mergeRequestIid)
+  },
+  request_gitlab_mr_reviewers: {
+    description: "Assign reviewers to a GitLab merge request by username. GitLab's update endpoint REPLACES the reviewer list; this tool defaults to adding instead (reads the current reviewers and unions them), so calling it twice does not silently un-assign the first reviewer. Pass replace: true for GitLab's native replace behaviour.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string" },
+        mergeRequestIid: { type: "number" },
+        reviewerUsernames: { type: "array", items: { type: "string" }, minItems: 1 },
+        replace: {
+          type: "boolean",
+          description: "false (default) adds to existing reviewers; true replaces the list."
+        }
+      },
+      required: ["project", "mergeRequestIid", "reviewerUsernames"]
+    },
+    parse: (a) => RequestGitLabMrReviewersInputSchema.parse(a),
+    handler: async (input) => requestGitLabMrReviewers(loadGitLabConfigFromEnv(), input)
+  },
+  create_gitlab_issue: {
+    description: "Create a GitLab issue. Labels are sent as GitLab's comma-separated string form; assignee usernames are resolved to numeric user IDs first.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        title: { type: "string", description: "Issue title." },
+        description: { type: "string", description: "Issue body (Markdown)." },
+        labels: { type: "array", items: { type: "string" } },
+        assigneeUsernames: { type: "array", items: { type: "string" } }
+      },
+      required: ["project", "title"]
+    },
+    parse: (a) => CreateGitLabIssueInputSchema.parse(a),
+    handler: async (input) => createGitLabIssue(loadGitLabConfigFromEnv(), input)
+  },
+  get_gitlab_pipeline_status: {
+    description: "Read a GitLab pipeline's status -- the counterpart to get_github_workflow_run_status. GitLab folds GitHub's status+conclusion pair into one `status` field (created/pending/running/success/failed/canceled/skipped/manual), so the returned shape deliberately does not fake a `conclusion` key GitLab never sends.",
+    jsonSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string", description: "Numeric project ID, or the full path 'group/subgroup/project'." },
+        pipelineId: { type: "number", description: "Pipeline ID." }
+      },
+      required: ["project", "pipelineId"]
+    },
+    parse: (a) => GetGitLabPipelineStatusInputSchema.parse(a),
+    handler: async (input) => getGitLabPipelineStatus(loadGitLabConfigFromEnv(), input.project, input.pipelineId)
   }
 };
 var server = new Server(
@@ -19303,13 +19785,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     inputSchema: def.jsonSchema
   }))
 }));
-server.setRequestHandler(CallToolRequestSchema, async (request3) => {
-  const def = tools[request3.params.name];
+server.setRequestHandler(CallToolRequestSchema, async (request4) => {
+  const def = tools[request4.params.name];
   if (!def) {
-    throw new Error(`Unknown tool: ${request3.params.name}`);
+    throw new Error(`Unknown tool: ${request4.params.name}`);
   }
   try {
-    const input = def.parse(request3.params.arguments);
+    const input = def.parse(request4.params.arguments);
     const result = await def.handler(input);
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
