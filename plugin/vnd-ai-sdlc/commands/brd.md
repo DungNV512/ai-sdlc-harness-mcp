@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 Stage B1. See `docs/ai-sdlc/stage-b-definition.md`. Default agent: `pm-analyst`.
 
-Produces `docs/specs/<slug>/brd.md` against `vnd.ai-sdlc.brd/v1`.
+Produces `docs/specs/<slug>/brd.md` against `vnd.ai-sdlc.brd/v2`.
 
 ## Step 1 — Pre-conditions
 

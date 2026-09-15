@@ -1,4 +1,4 @@
-# vnd.ai-sdlc.traceability/v2
+# vnd.ai-sdlc.traceability/v3
 #
 # The manifest every feature folder carries: docs/specs/<slug>/traceability.yaml.
 # It is the one file that links a piece of work back to why it exists, and
@@ -25,7 +25,7 @@
 #   - /plan-feature generates this file from the schema. Hand-edit it freely
 #     afterwards -- it is a manifest, not generated output that gets clobbered.
 
-schema: vnd.ai-sdlc.traceability/v2
+schema: vnd.ai-sdlc.traceability/v3
 
 slug: <feature-slug>              # matches the docs/specs/<slug>/ folder name
 title: <one line, plain language>
@@ -60,6 +60,14 @@ discovery:
   market_scan: <Confluence URL or PENDING — reason>
   feasibility_assessment: <Confluence URL or PENDING — reason>
   discovery_report: <Confluence URL or PENDING — reason>
+  # IPAM Way canvas -- the working-team alignment artefact. Its M block is
+  # what makes the delivery breakdown auditable: every workstream carries a
+  # named accountable person and a date, and /gate G2 refuses a canvas whose
+  # M rows still read '?'.
+  ipam_way: <Confluence URL or PENDING — reason>
+  # OMVP charter -- objectives, 4D timeframe, owners, outputs, budget.
+  # One per flow where an initiative has several.
+  omvp: <Confluence URL or PENDING — reason>
 
 # ---------------------------------------------------------------------------
 # Stage B (Define). Present for work that went through B0-B2; omit the whole
@@ -84,6 +92,10 @@ define:
   trace_check:
     uncovered_rules: []
     untraced_features: []
+  # Roles named in the PRD with a data scope. A role that first appears at C2
+  # arrives with no persona and no acceptance criteria -- the Omnichannel SRS
+  # had to backfill three of them.
+  roles_defined: []             # e.g. [AGENT, TEAM_LEAD, UNIT_ADMIN]
 
 # ---------------------------------------------------------------------------
 # Stage C (Design).
@@ -95,6 +107,9 @@ design:
   srs: <Confluence URL or PENDING — reason>
   ui_spec: <Confluence URL or PENDING — reason>
   test_strategy: <Confluence URL or PENDING — reason>
+  # Set true once the SRS carries a permissions matrix. Required whenever
+  # define.roles_defined has more than one entry.
+  permissions_matrix: false
   threat_model: <repo path or PENDING — reason>
   # Contracts the design needs that do not exist yet, with the team that owns
   # the other side. Visible at G4 rather than discovered in stage D.

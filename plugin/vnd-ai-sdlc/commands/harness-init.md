@@ -187,7 +187,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   (`vnd.ai-sdlc.pull-request/v1`).
 - `docs/ai-sdlc/templates/jira-ticket.md` — `vnd.ai-sdlc.jira-ticket/v1`.
 - `docs/ai-sdlc/templates/skill.md` — `vnd.ai-sdlc.skill/v1`.
-- `docs/ai-sdlc/templates/traceability.yaml` — `vnd.ai-sdlc.traceability/v2`.
+- `docs/ai-sdlc/templates/traceability.yaml` — `vnd.ai-sdlc.traceability/v3`.
   **Do not skip this one.** Eleven commands read `traceability.yaml`;
   `/plan-feature` generates each feature's copy from this schema. Without it
   every team hand-writes the manifest, guesses different key names, and the
@@ -213,16 +213,28 @@ to guess what it was handed. Write all of these, each only if missing (or with
   (`vnd.ai-sdlc.market-scan/v1`), `feasibility-assessment.md`
   (`vnd.ai-sdlc.feasibility-assessment/v1`), and `discovery-report.md`
   (`vnd.ai-sdlc.discovery-report/v1`).
+- The **A5 alignment** contracts: `ipam-way.md` (`vnd.ai-sdlc.ipam-way/v1`)
+  and `omvp.md` (`vnd.ai-sdlc.omvp/v1`). These two carry the organisation's
+  own working-team method — the IPAM Way canvas and the OMVP charter — and
+  they are the only artefacts that record a named accountable person and a
+  date per workstream. Without them the delivery breakdown lives in someone's
+  head until G2.
 - The **Stage B** contracts: `systems-context.md`
-  (`vnd.ai-sdlc.systems-context/v1`), `brd.md` (`vnd.ai-sdlc.brd/v1`), and
-  `prd.md` (`vnd.ai-sdlc.prd/v1`).
+  (`vnd.ai-sdlc.systems-context/v1`), `brd.md` (`vnd.ai-sdlc.brd/v2`), and
+  `prd.md` (`vnd.ai-sdlc.prd/v2`).
 - The **Stage C** contracts: `package-design.md`
   (`vnd.ai-sdlc.package-design/v1`), `integration-design.md`
   (`vnd.ai-sdlc.integration-design/v1`), `function-list.md`
-  (`vnd.ai-sdlc.function-list/v1`), `srs.md` (`vnd.ai-sdlc.srs/v1`),
+  (`vnd.ai-sdlc.function-list/v1`), `srs.md` (`vnd.ai-sdlc.srs/v2`),
   `ui-spec.md` (`vnd.ai-sdlc.ui-spec/v1`), `test-strategy.md`
   (`vnd.ai-sdlc.test-strategy/v1`), and `threat-model.md`
   (`vnd.ai-sdlc.threat-model/v1`).
+- `docs/ai-sdlc/document-conventions.md` — **write this one first.** It is
+  the house rules every other artefact inherits (identity block, version
+  history, permanent ids, explicit absence, unconfirmed markers, decision
+  refs, mapping tables, mermaid-inline diagrams, numeric NFRs). Every template
+  below references it, so a repo that has the templates and not this file has
+  eleven documents each re-deciding its own conventions.
 - `docs/ai-sdlc/stage-a-discovery.md`, `stage-b-definition.md` and `stage-c-design.md` — the upstream
   stages and the G1–G4 gates.
   Every upstream command — `/idea-card`, `/problem-canvas`, `/market-scan`,
@@ -343,13 +355,13 @@ waiting to happen (see the `.mcp.json` bug), and the plugin ships no `docs/`
 directory to read from.
 
 The traceability manifest shape, which `/plan-feature` generates each
-feature's copy from. **This is `vnd.ai-sdlc.traceability/v2`** — it must
+feature's copy from. **This is `vnd.ai-sdlc.traceability/v3`** — it must
 match `docs/ai-sdlc/templates/traceability.yaml` exactly; if the two ever
 drift, the template file is the one to trust and this block needs updating,
 not the other way round:
 
 ```yaml
-schema: vnd.ai-sdlc.traceability/v2
+schema: vnd.ai-sdlc.traceability/v3
 
 slug: <feature-slug>              # matches the docs/specs/<slug>/ folder name
 title: <one line, plain language>
@@ -375,6 +387,8 @@ discovery:
   market_scan: <Confluence URL or PENDING — reason>
   feasibility_assessment: <Confluence URL or PENDING — reason>
   discovery_report: <Confluence URL or PENDING — reason>
+  ipam_way: <Confluence URL or PENDING — reason>      # A5 alignment canvas
+  omvp: <Confluence URL or PENDING — reason>          # A5 charter, one per flow
 
 # Stage B (Define). Present for work that went through B0-B2.
 define:
@@ -389,6 +403,7 @@ define:
   trace_check:                    # the two-way BRD<->PRD check from B2
     uncovered_rules: []
     untraced_features: []
+  roles_defined: []               # every role with a persona + data scope in the PRD
 
 # Stage C (Design).
 design:
@@ -399,6 +414,7 @@ design:
   ui_spec: <Confluence URL or PENDING — reason>
   test_strategy: <Confluence URL or PENDING — reason>
   threat_model: <repo path or PENDING — reason>
+  permissions_matrix: false       # required once define.roles_defined has >1 entry
   blocked_contracts: []           # contracts needed but not confirmed, visible at G4
   figma_file_key: <published key or PENDING — reason>   # never an unsaved-* key
   user_story_ids: []              # e.g. [US1-01, US1-02, US2-01] — assigned once at C2

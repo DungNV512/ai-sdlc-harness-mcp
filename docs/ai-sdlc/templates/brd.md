@@ -1,10 +1,16 @@
 # BRD template — Business Requirements Document
 
-`schema: vnd.ai-sdlc.brd/v1`
+`schema: vnd.ai-sdlc.brd/v2`
 
 The B1 artefact. Five sections. Its rules constrain every solution that comes
 after it, which is why they carry stable IDs and why a contradiction between
 two of them is a defect rather than a discussion.
+
+Conventions: `docs/ai-sdlc/document-conventions.md`. v2 adds the four
+conventions the organisation's real documents already rely on and this
+template previously left implicit: a version-history changelog (C-2), an
+in-document id-format declaration (C-3), explicit absence (C-4), and decision
+references threaded into the rule table (C-6).
 
 **Rule IDs are the spine of the whole traceability chain**: `BR-001 → F-012 →
 AC-034 → US1-02 → code → test → MR`. Everything downstream cites them.
@@ -28,7 +34,11 @@ documents cite these numbers, and a recycled ID silently repoints a trace.
 - **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Owner**: <PM>   **Architect**: <name>   **Date**: <YYYY-MM-DD>
 - **Sources**: Discovery Report <link> · Company Context <link> ·
-  Systems & Projects Context <link>
+  Systems & Projects Context <link> · IPAM Way canvas <link>
+
+**Id formats used in this document**: `BR-NNN` · `DR-NNN` · `SR-NNN` ·
+`IR-NNN` · `Q-NNN` · `A-nn` (decision register). Withdrawn rules keep their
+number and are marked withdrawn with a date and a reason (C-3).
 
 ## 1. Business context
 
@@ -37,8 +47,12 @@ does not re-argue it.>
 
 ## 2. Stakeholders
 
-| Stakeholder | Role | What they need from this | Sign-off required? |
-|---|---|---|---|
+Every function gets a row, including functions with no representative —
+write `Không có` rather than omitting the row (C-4). Draw from the IPAM Way
+Interbeing block where one exists.
+
+| Function | Stakeholder | Role | What they need from this | Sign-off required? |
+|---|---|---|---|---|
 
 ## 3. Success metrics
 
@@ -50,12 +64,16 @@ a metric without both cannot be failed, which means it cannot be passed.
 
 ## 4. Business rules
 
-| ID | Rule | Rationale | Source | Status |
-|---|---|---|---|---|
-| BR-001 | | | Discovery Report §x / stakeholder | Active |
-| DR-001 | | | | Active |
-| SR-001 | | | | Active |
-| IR-001 | <must name the actual system, e.g. "iVND identity service"> | | | Active |
+| ID | Rule | Rationale | Source | Decision | Status |
+|---|---|---|---|---|---|
+| BR-001 | | | Discovery Report §x / stakeholder | A-01 | Active |
+| DR-001 | | | | | Active |
+| SR-001 | | | | | Active |
+| IR-001 | <must name the actual system, e.g. "iVND identity service"> | | | | Active |
+
+Status vocabulary: `Active` · `Withdrawn — <date>, <reason>` ·
+`Proposed — *(cần xác nhận — <who>)*`. A rule still awaiting confirmation
+carries the marker at the rule, not in a preamble (C-5).
 
 ## 5. Constraints and out of scope
 
@@ -65,12 +83,17 @@ a metric without both cannot be failed, which means it cannot be passed.
 
 ## Open questions
 
-| ID | Question | Owner | Needed by |
+| ID | Question | Owner | Needed by | Blocks |
+|---|---|---|---|---|
+| Q-001 | | <a person> | <date> | <what cannot start> |
+
+## Version history
+
+| Version | Date | Change | Author |
 |---|---|---|---|
-| Q-001 | | <a person> | <date> |
 ```
 
-## DoD — all seven must hold
+## DoD — all nine must hold
 
 1. Every business rule has a **unique ID**.
 2. **No rule contradicts another rule.** Check pairwise within each family and
@@ -84,6 +107,10 @@ a metric without both cannot be failed, which means it cannot be passed.
 6. **The Architect has confirmed in writing** — email or comment, not a
    verbal nod — that no technical constraint is missing.
 7. **Regulated domain: legal has confirmed** before finalisation.
+8. **Every stakeholder function has a row**, and a function with no
+   representative reads `Không có` (C-4).
+9. **Version history has a row for every change since 1.0**, each saying what
+   changed rather than "updated" (C-2).
 
 ## The reviewer pass — five angles
 

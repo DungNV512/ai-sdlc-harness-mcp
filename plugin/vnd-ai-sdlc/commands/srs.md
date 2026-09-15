@@ -9,7 +9,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 Stage C2. See `docs/ai-sdlc/stage-c-design.md`. Default agent: `architect`.
 
 Produces `docs/specs/<slug>/function-list.md` and `docs/specs/<slug>/srs.md`
-against `vnd.ai-sdlc.function-list/v1` and `vnd.ai-sdlc.srs/v1`.
+against `vnd.ai-sdlc.function-list/v1` and `vnd.ai-sdlc.srs/v2`.
 
 This is what stage D builds from and what QA writes test cases against before
 any code exists.

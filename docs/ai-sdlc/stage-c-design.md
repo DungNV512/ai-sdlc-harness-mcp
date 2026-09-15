@@ -70,10 +70,28 @@ requirements; assign `USn` ids per user story; trace each item back to
 `F-NNN` / `AC-NNN`.
 
 **Out** — `FUNCTION LIST` + `SRS` → Confluence.
-Templates: `vnd.ai-sdlc.function-list/v1`, `vnd.ai-sdlc.srs/v1`.
+Templates: `vnd.ai-sdlc.function-list/v1`, `vnd.ai-sdlc.srs/v2`.
 
-**Done when** — scope agreed by PM and C-level, **every requirement
-testable**, and every SRS item carrying a trace link up to the PRD.
+**Done when** — all nine must hold:
+
+1. Scope agreed by PM and C-level.
+2. **Every requirement individually testable** — each AC a Given/When/Then a
+   QA can write a case from without asking a question.
+3. **Every SRS item traces up to the PRD**, in the table, with no blank cells.
+4. Every requirement lists **all** of its states, not only the happy path.
+5. Every NFR carries **a number, a measurement point and a percentile** where
+   one applies.
+6. **A permissions matrix exists** wherever `define.roles_defined` has more
+   than one entry, with a data scope per cell.
+7. **Every entity in the register states PII and retention** — both, every
+   row. That pair is the first thing a compliance review asks for.
+8. **Every integration point names the system and its owner.**
+9. Flows are **mermaid, inline** — not a link to a board a reader may not be
+   able to open.
+
+Items 6–8 came from reading the organisation's two real SRSs against each
+other: each had a section the other lacked, and every one of those sections
+turned out to be load-bearing for somebody downstream.
 
 ### `USn` ids travel further than they look
 
