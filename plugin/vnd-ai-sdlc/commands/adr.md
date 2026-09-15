@@ -45,9 +45,9 @@ security posture, or cross-feature boundaries.
 ## Anti-patterns to refuse
 
 - Creating an ADR with a number that already exists on disk. Sequential
-  numbering is the MADR contract; use tombstoning (see
-  `docs/ai-sdlc/adr/0008-figma-source-of-truth.md` for the pattern) if a
-  historical ADR was renumbered.
+  numbering is the MADR contract. If a historical ADR was renumbered, leave a
+  tombstone at the old number — a file carrying only `Status: Superseded by
+  ADR-NNNN` and a link — so the gap is explained rather than silently reused.
 - Skipping the duplicate-number guard (step 3) because "the last ADR is
   clearly N-1". The guard costs one bash call; the audit-2026-07-20
   false-positive proved the value of an explicit check.

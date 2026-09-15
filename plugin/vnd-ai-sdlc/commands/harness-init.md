@@ -312,6 +312,32 @@ to guess what it was handed. Write all of these, each only if missing (or with
   `docs/ai-sdlc/`. Without it the conventions are a document nobody can
   enforce, which is the state that let a command declare one schema version
   while describing another.
+- `docs/ai-sdlc/delivery-phases.md` — the delivery half: Phases 0–8, a DoD
+  per phase, the G5 merge-gate evidence rules, and the mapping between the
+  numbered phases and the lettered stage names (`P`/`D`/`E`/`F`/`O`) that
+  `gate.md` and `stage-c-design.md` use. Without it a reader who meets "G5
+  sits at F3" has nowhere to find out what F3 is. Copy it verbatim, including
+  the `[chưa xác nhận]` markers — they record which letter meanings are
+  evidenced and which are inferred, and deleting them promotes a guess to a
+  fact.
+- `docs/ai-sdlc/review-checklist.md` — walked section by section by `/review`
+  and the `reviewer` agent at Phase 5. **Not optional**: the agent is
+  instructed to walk this file, so a repo without it gets an agent that
+  improvises a checklist and reports the phase as passed.
+- `docs/ai-sdlc/security-checklist.md` — the same relationship to
+  `/security-review` and the `security` agent at Phase 6.
+- `docs/ai-sdlc/definition-of-done.md` — the per-phase DoD index that
+  `/ship-feature` reads rows from and `/audit` reads whole. It indexes the
+  stage documents rather than restating them; where they disagree the stage
+  document wins.
+- `docs/ai-sdlc/adr/template.md` — `/adr` reads this file at step 1 and
+  creates from it at step 4, so `/adr` cannot run in a repo that lacks it.
+  Create the `adr/` directory at the same time.
+- `docs/ai-sdlc/coding-standards.md` — a **stub**, only if missing. Several
+  commands and agents tell the reader to follow it, so the path must resolve;
+  but its content is per-project and inventing standards nobody agreed to is
+  worse than an empty file. Seed it with the section headings and
+  `NEEDS OWNER — not yet filled` under each, exactly as with Company Context.
 - `docs/ai-sdlc/stage-a-discovery.md`, `stage-b-definition.md` and `stage-c-design.md` — the upstream
   stages and the G1–G4 gates.
   Every upstream command — `/idea-card`, `/problem-canvas`, `/market-scan`,
@@ -336,7 +362,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   | A0 Issue intake | Issue Report | infrastructure, not a command |
   | A1 Signal normalisation | Idea Card | `/idea-card` |
   | A2 Problem framing | Problem Statement Canvas | `/problem-canvas` |
-  | A3 Market & feasibility scan | Market Scan, Feasibility Assessment | not built |
+  | A3 Market & feasibility scan | Market Scan, Feasibility Assessment | `/market-scan` |
   | A4 Discovery synthesis | Discovery Report | `/discovery-report` |
   | A5 Team alignment | IPAM Way canvas, OMVP charter | `/ipam-way` |
   | G1 Feasibility gate | Decision + minutes | `/gate G1` records it |

@@ -274,4 +274,7 @@ For each new widget:
 
 - `.claude/skills/golden-tests/SKILL.md` — alchemist setup and patterns
 - `.claude/skills/mobile-accessibility/SKILL.md` — a11y guideline checks in widget tests
-- `docs/ai-sdlc/mobile-standards.md` — golden coverage requirement per PR
+- the project's own mobile standards document, where it keeps one — golden
+  coverage requirement per PR. The overlay does not create it and Standard's
+  `/harness-init` does not scaffold it, so treat it as a repo-local file that
+  may not exist rather than a path you can rely on.

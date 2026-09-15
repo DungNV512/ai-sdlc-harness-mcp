@@ -18477,16 +18477,19 @@ async function updateConfluencePage(cfg, input) {
       `Confluence page ${input.pageId} is at version ${currentVersion}, not the expected ${input.expectedCurrentVersion}. Someone edited it since you read it -- re-read the page, merge your change, and retry.`
     );
   }
+  const targetStatus = input.status ?? current.status ?? "current";
+  const isFirstPublishOfDraft = current.status === "draft" && targetStatus === "current";
+  const nextVersion = isFirstPublishOfDraft ? 1 : currentVersion + 1;
   const payload = {
     id: input.pageId,
-    status: input.status ?? current.status ?? "current",
+    status: targetStatus,
     title: input.title,
     body: {
       representation: "storage",
       value: input.bodyHtml
     },
     version: {
-      number: currentVersion + 1,
+      number: nextVersion,
       ...input.versionMessage ? { message: input.versionMessage } : {}
     }
   };

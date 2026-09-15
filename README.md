@@ -36,7 +36,9 @@ This repo holds two halves:
 | Understand the SDLC flow (A → B → C → gates → delivery) | [`ARCHITECTURE.md#sdlc-flow-stages-a--b--c--gate--delivery`](./ARCHITECTURE.md#sdlc-flow-stages-a--b--c--gate--delivery) |
 | Know which agent does what | [`ARCHITECTURE.md#agents-roster`](./ARCHITECTURE.md#agents-roster) |
 | Quick lookup: command by use case | [`docs/ai-sdlc/COMMANDS.md#quick-lookup-by-use-case`](./docs/ai-sdlc/COMMANDS.md#quick-lookup-by-use-case) |
-| Know what each phase produces and when it is done | [`stage-a-discovery.md`](./docs/ai-sdlc/stage-a-discovery.md) · [`stage-b-definition.md`](./docs/ai-sdlc/stage-b-definition.md) · [`stage-c-design.md`](./docs/ai-sdlc/stage-c-design.md) |
+| Know what each phase produces and when it is done | [`stage-a-discovery.md`](./docs/ai-sdlc/stage-a-discovery.md) · [`stage-b-definition.md`](./docs/ai-sdlc/stage-b-definition.md) · [`stage-c-design.md`](./docs/ai-sdlc/stage-c-design.md) · [`delivery-phases.md`](./docs/ai-sdlc/delivery-phases.md) |
+| Look up the DoD for one phase, or all of them | [`definition-of-done.md`](./docs/ai-sdlc/definition-of-done.md) |
+| Find out what `Stage P` or `F3` means | [`delivery-phases.md`](./docs/ai-sdlc/delivery-phases.md#two-naming-schemes-and-which-one-is-normative) |
 | Write one of the documents | the matching file in [`docs/ai-sdlc/templates/`](./docs/ai-sdlc/templates), plus [`document-conventions.md`](./docs/ai-sdlc/document-conventions.md) |
 | Know the MCP tools and their env vars | [`mcp-server/README.md`](./mcp-server/README.md) |
 
@@ -75,7 +77,10 @@ machine-checkable DoDs and, for a while, had none of its own.
 | A | Stage A discovery A0–A5 + G1, with `/idea-card`, `/problem-canvas`, `/market-scan`, `/discovery-report`, `/ipam-way` | ✅ built — **not yet run on a real feature** |
 | B | Stage B definition B0–B2 + G2/G3, with `/context-doc`, `/brd`, `/prd` | ✅ built — **not yet run on a real feature** |
 | C | Stage C design C1–C5 + G4, with `/sa-view`, `/srs`, `/ui-spec`, `/test-strategy`, `/security-review` | ✅ built — **not yet run on a real feature** |
-| — | Document conventions C-0…C-10 + `check-conventions.py` | ✅ done — the checker passes on this repo |
+| P–O | Delivery half: Phases 0–8 + G5, DoD per phase, `delivery-phases.md` | ✅ **specified** — Phase 7.5 (close trace + publish reader copy) named as **not built** |
+| — | `review-checklist.md`, `security-checklist.md`, `definition-of-done.md` | ✅ done — Phase 5/6 agents were instructed to walk files that existed nowhere |
+| — | Document conventions C-0…C-10 + `check-conventions.py` | ✅ done — the checker passes on this repo, and now also fails on a dead `docs/ai-sdlc/` path |
+| — | `npm run smoke` — one real read-only call per platform | ✅ done — GitHub and the Claude Code trigger PASS; the other four report SKIP until run from a machine that can reach them |
 | — | 23 versioned artefact templates, incl. IPAM Way and OMVP | ✅ done |
 | — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v3`) + generation in `/plan-feature` | ✅ done |
 | — | Publishing artefacts to Confluence automatically | ❌ **not built** — only `/gate` calls `create_confluence_page`. Stage A/B/C artefacts reach the manifest, not the wiki |
@@ -93,11 +98,24 @@ So the request/response shapes are exercised against stubs, not against the
 real APIs. The places where those APIs differ in ways a naive port gets
 wrong — GitLab addressing projects by URL-encoded path, having no draft flag,
 replacing rather than appending reviewer lists, taking numeric user ids
-instead of usernames; Confluence requiring version *current + 1* on every
-update — are handled explicitly and covered by
+instead of usernames; Confluence requiring version *current + 1* on an
+update but version *1* on a draft's first publish — are handled explicitly
+and covered by
 `mcp-server/unit-test.mjs`. What is *not* covered is whether the endpoints
-behave as documented. Run `npm test` in `mcp-server/`, then make one real
-call per platform from a machine with network access before trusting them.
+behave as documented.
+
+**That gap has a measured cost, not a theoretical one.** The one Confluence
+defect anybody has actually observed — *"Version number must be 1 when
+publishing a page for the first time. Provided version: 2"* — is invisible to
+a stubbed `fetch`, because the stub returns whatever we told it to. It was
+found in a real response, and `updateConfluencePage` incremented
+unconditionally until that response was read.
+
+So: run `npm test` in `mcp-server/` for the logic, then
+**`npm run smoke`** from a machine that can reach these hosts. It makes one
+read-only call per platform through the harness's own client code and prints
+PASS / FAIL / SKIP per platform. A SKIP is not a pass, and the script says so
+out loud.
 
 See `mcp-server/README.md` for the tool reference and setup instructions.
 

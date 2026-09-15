@@ -129,5 +129,30 @@ check("stale expectedCurrentVersion refuses the write",
   threw !== null && threw.message.includes("version 7"), threw?.message?.slice(0, 90));
 check("refused write sent no PUT", !calls.some((c) => c.method === "PUT"));
 
+// Regression: publishing a draft for the first time. Confluence answers
+// "Version number must be 1 when publishing a page for the first time.
+// Provided version: 2" if we increment here. Recorded from a real failed call,
+// see the block comment in confluence.ts and SBV2 page 450823289.
+stubFetch([
+  ["/pages/77?body-format", { method: "GET", data: { id: "77", title: "D", status: "draft", version: { number: 1 } } }],
+  ["/pages/77", { method: "PUT", data: { id: "77", title: "D", version: { number: 1 } } }],
+]);
+await updateConfluencePage(CF, { pageId: "77", title: "D", bodyHtml: "<p>x</p>", status: "current" });
+const draftPut = calls.find((c) => c.method === "PUT");
+check("first publish of a draft sends version 1, not 2",
+  draftPut.body.version.number === 1, String(draftPut.body.version.number));
+check("first publish of a draft sets status current", draftPut.body.status === "current");
+
+// ...and the narrow fix must not change a normal edit of an already-draft page
+// that stays a draft.
+stubFetch([
+  ["/pages/78?body-format", { method: "GET", data: { id: "78", title: "D", status: "draft", version: { number: 3 } } }],
+  ["/pages/78", { method: "PUT", data: { id: "78", title: "D", version: { number: 4 } } }],
+]);
+await updateConfluencePage(CF, { pageId: "78", title: "D", bodyHtml: "<p>x</p>", status: "draft" });
+const draftEdit = calls.find((c) => c.method === "PUT");
+check("editing a draft that stays a draft still increments",
+  draftEdit.body.version.number === 4, String(draftEdit.body.version.number));
+
 console.log(`\n=== ${fails.length === 0 ? "ALL CHECKS PASSED" : `${fails.length} FAILURE(S): ${fails.join(", ")}`} ===`);
 process.exit(fails.length === 0 ? 0 : 1);

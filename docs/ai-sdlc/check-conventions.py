@@ -2,14 +2,24 @@
 """Mechanically check that this harness follows its own document conventions.
 
 The framework insists on machine-checkable DoDs and then had no check of its
-own. This is that check. It verifies four things that drifted silently before
+own. This is that check. It verifies five things that drifted silently before
 it existed:
 
   1. every phase template carries the C-1 identity fields;
   2. every gate-signed template carries a C-2 version-history table;
   3. every schema id referenced anywhere has a template, and vice versa;
   4. every artefact-producing command cites the same schema version as the
-     template it produces, and references the conventions.
+     template it produces, and references the conventions;
+  5. every `docs/ai-sdlc/...` path a command, agent or skill tells the reader
+     to open actually exists -- either committed here, or written into the
+     consuming repo by /harness-init.
+
+Check 5 was added after an audit found eight dead paths at once, including
+`review-checklist.md` and `security-checklist.md`: the Standard plugin's
+`reviewer` and `security` agents both instruct "walk this file section by
+section" for files that existed nowhere. Nothing caught it, because a
+reference to a missing document fails silently -- the agent improvises and the
+phase appears to pass.
 
 Exit code 1 on any failure, so it can gate a commit.
 """
@@ -111,6 +121,43 @@ for f in sorted(glob.glob('plugin/vnd-ai-sdlc/commands/*.md')):
     if produced - NOT_PHASE_SLUGS and 'document-conventions' not in text:
         fails.append(f'C-ref {os.path.basename(f)}: produces a phase artefact but '
                      f'never references document-conventions.md')
+
+# --- 5 -----------------------------------------------------------------------
+# A command that says "walk docs/ai-sdlc/x.md" when x.md exists nowhere does
+# not error -- the agent improvises and the step reports success. So every
+# referenced path must be satisfied one of two ways:
+#   (a) committed in this repo, or
+#   (b) written into the consuming repo by /harness-init, which declares the
+#       files it writes as `- `docs/ai-sdlc/x`` bullets or `### `docs/ai-sdlc/x``
+#       headings.
+# Adding a reference therefore means committing the file or adding the bullet.
+HARNESS_INIT = 'plugin/vnd-ai-sdlc/commands/harness-init.md'
+_init = open(HARNESS_INIT).read() if os.path.exists(HARNESS_INIT) else ''
+SCAFFOLDED = set(re.findall(r'^(?:\s*[-*]|#{2,4})\s+`docs/ai-sdlc/([^`]+)`', _init, re.M))
+
+# A path the text builds at runtime (<slug>, <n>, <name>) is a pattern, not a
+# file; only literal paths are checkable.
+PLACEHOLDER = re.compile(r'[<>*]')
+
+ref_sites = {}
+for f in sorted(set(glob.glob('plugin/**/*.md', recursive=True)
+                    + glob.glob('docs/ai-sdlc/*.md'))):
+    if f.endswith(HARNESS_INIT.split('/')[-1]) and f == HARNESS_INIT:
+        continue  # it declares the files; it does not consume them
+    text = open(f).read()
+    for m in re.finditer(r'docs/ai-sdlc/([A-Za-z0-9_./-]+\.(?:md|ya?ml|py))', text):
+        p = m.group(1)
+        if PLACEHOLDER.search(p):
+            continue
+        ref_sites.setdefault(p, set()).add(f)
+
+for p in sorted(ref_sites):
+    if os.path.exists(f'docs/ai-sdlc/{p}') or p in SCAFFOLDED:
+        continue
+    where = sorted(os.path.basename(x) for x in ref_sites[p])
+    shown = ', '.join(where[:3]) + (f' +{len(where) - 3} more' if len(where) > 3 else '')
+    fails.append(f'DEAD docs/ai-sdlc/{p}: referenced by {shown} but neither '
+                 f'committed here nor scaffolded by /harness-init')
 
 # --- report ----------------------------------------------------------------
 if fails:

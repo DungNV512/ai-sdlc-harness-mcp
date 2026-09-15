@@ -227,6 +227,20 @@ export interface UpdatePageInput {
  * rather than making every caller do it is what keeps `/pull-confluence` and
  * the doc-ingest skills from each reimplementing the same increment slightly
  * differently.
+ *
+ * ONE EXCEPTION, and it is not derivable from the API docs -- it came from a
+ * real failed call recorded at
+ * https://ipas-tech.atlassian.net/wiki/spaces/SBV2/pages/450823289 :
+ *
+ *   "Version number must be 1 when publishing a page for the first time.
+ *    Provided version: 2"
+ *
+ * Publishing a DRAFT for the first time (status draft -> current) is not an
+ * update of an existing version, it is the page's first publication, and
+ * Confluence wants version 1 even though the draft itself reports version 1
+ * already. Incrementing unconditionally fails every draft publish. The check
+ * below is narrow on purpose: it only fires on the draft -> current
+ * transition, so a normal edit of a published page still increments.
  */
 export async function updateConfluencePage(
   cfg: ConfluenceConfig,
@@ -248,16 +262,24 @@ export async function updateConfluencePage(
     );
   }
 
+  const targetStatus = input.status ?? current.status ?? "current";
+
+  // First publish of a draft: Confluence wants version 1, not current + 1.
+  // See the block comment above -- this is recorded API behaviour, not a guess.
+  const isFirstPublishOfDraft =
+    current.status === "draft" && targetStatus === "current";
+  const nextVersion = isFirstPublishOfDraft ? 1 : currentVersion + 1;
+
   const payload: Record<string, unknown> = {
     id: input.pageId,
-    status: input.status ?? current.status ?? "current",
+    status: targetStatus,
     title: input.title,
     body: {
       representation: "storage",
       value: input.bodyHtml,
     },
     version: {
-      number: currentVersion + 1,
+      number: nextVersion,
       ...(input.versionMessage ? { message: input.versionMessage } : {}),
     },
   };
