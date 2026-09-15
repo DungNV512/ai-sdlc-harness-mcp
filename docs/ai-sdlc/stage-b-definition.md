@@ -178,8 +178,8 @@ three.
 8. Every open question has **a named owner and a deadline**.
 9. **Every role the system will have has a persona row with a data scope** —
    administrative and operational roles included. A role that first appears
-   at C2 arrives with no persona and no acceptance criteria; the Omnichannel
-   SRS had to backfill three.
+   at C2 arrives with no persona and no acceptance criteria — a real SRS in
+   this organisation had to backfill three of them.
 10. **The two-way coverage result is recorded**, both directions, with
     `Không có` where a direction is clean.
 

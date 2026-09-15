@@ -6,20 +6,30 @@ The C2 artefact stage D builds from, and the one QA writes test cases against
 before code exists. Every acceptance criterion in the PRD is detailed here
 into requirements that are individually testable.
 
-**v2 is derived from two real, shipped SRSs** — `SRS Omnichannel Phase 1`
-(MID) and `SRS: Stockbook` (SN). Where they agreed, v2 adopts the shared
-shape. Where they diverged, v2 takes the stronger side and says why:
+**The shape of this template is Stockbook's.** Two real, shipped SRSs were
+read — `SRS: Stockbook` (SN) and `SRS Omnichannel Phase 1` (MID). Per the
+precedence rule in `docs/ai-sdlc/document-conventions.md` (C-0), where the two
+do the same thing differently, **Stockbook's form is the house form**:
 
-| Divergence | Omnichannel | Stockbook | v2 takes |
+| Conflict | Stockbook (house form) | Omnichannel | This template |
 |---|---|---|---|
-| Requirement ids | `FR-<AREA>-NNN` | `FR-###` flat | **`FR-<AREA>-NNN`** — the area segment survives renumbering pressure and makes an orphan obvious |
-| Traceability | explicit FR↔US table | prose changelog only | **explicit table** — a trace a script cannot read is not a trace |
-| Diagrams | mermaid flow/state/sitemap | none | **mermaid, inline** (C-8) |
-| Permissions | full RBAC matrix + scope | narrative in two FRs | **matrix** where more than one role exists |
-| Data | — | entity register with PII/retention/volume | **entity register** — it doubles as the data-governance record |
-| Glossary | inline in §1.3 | dedicated §8 | **dedicated section** |
+| Section skeleton | numbered `1.`–`9.`, version history last | `PHẦN 1 / 3 / 4 / 5` | **Stockbook's 1–9**, additions appended before version history |
+| Requirement ids | `FR-###`, flat across the whole document | `FR-<AREA>-NNN` | **`FR-###`** |
+| Requirement body | prose block: User Story + Acceptance Criteria | `B1/B2/B3` steps + tables | **Stockbook's block** |
+| Acceptance criteria | Given/When/Then as prose — *"Cho …, khi …, thì …"* | table | **Stockbook's prose form** |
+| NFR layout | five named subsections, third column = business goal | one table grouped by `Nhóm` | **Stockbook's five subsections** |
+| Glossary | dedicated section | inline in §1.3 | **dedicated section** |
 
-Conventions: `docs/ai-sdlc/document-conventions.md`.
+Three sections here exist in the Omnichannel SRS and **not** in Stockbook's.
+They are additions, not conflicts (C-0), and each is labelled with where it
+came from so the team can judge it rather than inherit it:
+
+- **§9 Luồng nghiệp vụ** (mermaid) — Stockbook's SRS has no diagrams at all.
+- **§10 Ma trận phân quyền** — Stockbook describes auth narratively inside two
+  FRs; required here only when more than one role exists.
+- **§11 Truy vết** — the one addition that is **not optional**. Stockbook's
+  trace lives in a prose changelog, which no check can read; the framework's
+  spine (`BR-001 → F-012 → AC-034 → US1-02 → code → test → MR`) needs a table.
 
 **`USn` ids travel** — `US1-02` is story 2 of epic 1, and that id reaches
 Figma frame names, task filenames and test names. Renaming one later breaks
@@ -30,50 +40,143 @@ four references silently (C-3).
 ```markdown
 # SRS — <initiative>
 
-- **Version**: 1.0   **Status**: Draft | In review | Approved
-- **Owner**: <Architect / BA, by name>   **Date**: <YYYY-MM-DD>
-- **Sources**: BRD <link> · PRD <link> · C1 SA View <link>
+**Phiên bản**: v1.0 | **Trạng thái**: Bản nháp | Đang review | Đã duyệt
+**Owner**: <Architect / BA, by name> | **Ngày**: <YYYY-MM-DD>
+**Nguồn**: BRD <link> · PRD <link> · C1 SA View <link>
 
-**Id formats used in this document**: `FR-<AREA>-NNN` · `NFR-NNN` ·
-`USn-NN` · `C00N` (feature category) · `BR-NNN` (rules, from the BRD) ·
-`A-nn` (decision register). Withdrawn ids keep their number (C-3).
+## 1. Mục đích & Tầm nhìn
 
-## 1. Overview and scope
+### Hệ thống này làm gì
 
-### 1.1 Purpose and context
+<One paragraph. A reader who stops here knows what the thing is.>
 
-<What this system does and the business outcome it serves. One paragraph.
-Cite the PRD's OKR rather than restating it.>
+### Mục tiêu kinh doanh
 
-### 1.2 Scope
-
-**In scope**, by feature category:
-
-| Category | Capability | Source |
-|---|---|---|
-| C001 | | US.01–03 / F-001 |
-
-**Out of scope**, with the phase that will carry it:
-
-| Capability | Why not now | Where instead |
+| # | Mục tiêu | Chỉ số thành công |
 |---|---|---|
 
-### 1.3 Assumptions, constraints and dependencies
+### Vấn đề được giải quyết
 
-| Type | Statement |
+<The problem, from the PRD. Cited, not re-argued.>
+
+## 2. Phạm vi
+
+### Trong phạm vi
+
+The `#` column carries the feature category id, reused verbatim as the §4
+headings.
+
+| # | Khả năng | Mô tả |
+|---|---|---|
+| C001 | | |
+
+### Ngoài phạm vi
+
+| Khả năng | Lý do |
 |---|---|
-| Assumption | <and what would invalidate it> |
-| Constraint | <technical, regulatory, contractual> |
-| Dependency | <the named system or team, and what we need from it> |
 
-## 2. Actors and roles
+### Giả định & Ràng buộc
 
-| Role | Description | Primary goal | Data scope |
+| Loại | Tuyên bố |
+|---|---|
+| Giả định | <and what would invalidate it> |
+| Ràng buộc | <technical, regulatory, contractual> |
+| Phụ thuộc | <the named system or team, and what we need from it> |
+
+## 3. Vai trò người dùng & Mục tiêu
+
+Every role the system will have, including administrative and operational
+roles. A role that reaches this table for the first time — rather than
+arriving from the PRD — is a PRD defect; report it back.
+
+| Vai trò | Mô tả | Mục tiêu chính | Phạm vi dữ liệu |
 |---|---|---|---|
 
-## 3. Flows
+## 4. Yêu cầu chức năng
 
-Mermaid, inline (C-8). At minimum: the end-to-end happy path, and a state
+**Định dạng**: `FR-###` — flat across the whole document, not per category.
+Numbering is **not** contiguous within a category: a new requirement takes the
+next free number regardless of where it sits. Withdrawn requirements keep
+their number (C-3).
+
+### C001 - <tên nhóm>
+
+#### FR-001: <tên yêu cầu>
+
+- **User Story**: Là <persona>, tôi muốn <capability>, để <outcome>.
+- **Nguồn**: F-003 · AC-007, AC-008 · BR-001 · US1-01
+- **Acceptance Criteria**:
+  - Cho <điều kiện>, khi <hành động>, thì <kết quả quan sát được>.
+  - Cho …, khi …, thì ….
+- **Trạng thái màn hình**: <every state — loading · empty · error *per
+  failure mode* · success · offline · permission-denied · first-run ·
+  overflow. C3 draws one frame per state; a state missing here is a frame
+  nobody designs and a branch nobody codes.>
+- **Quy tắc áp dụng**: <the `BR/DR/SR/IR` ids this honours, and how>
+- **Ngoài phạm vi của yêu cầu này**: <the adjacent thing a reader assumes>
+
+Where a requirement changed after sign-off, annotate at the heading itself —
+`#### FR-022: <tên> *(v1.1.16 — bỏ giới hạn 30 phút)*` — so the diff is
+visible where the requirement is read, not only in §12.
+
+## 5. Yêu cầu phi chức năng
+
+Five named groups. Every row carries a number and the business goal it
+serves; a threshold with no number is an aspiration (C-9).
+
+### Hiệu suất
+
+| ID | Yêu cầu | Ngưỡng | Đo tại | Mục tiêu kinh doanh |
+|---|---|---|---|---|
+| NFR-001 | | <e.g. <200ms p95> | <measurement point> | |
+
+### Bảo mật
+
+| ID | Yêu cầu | Ngưỡng | Đo tại | Mục tiêu kinh doanh |
+|---|---|---|---|---|
+
+### Khả năng mở rộng
+
+| ID | Yêu cầu | Ngưỡng | Đo tại | Mục tiêu kinh doanh |
+|---|---|---|---|---|
+
+### Khả dụng
+
+| ID | Yêu cầu | Ngưỡng | Đo tại | Mục tiêu kinh doanh |
+|---|---|---|---|---|
+
+### Tuân thủ
+
+| ID | Yêu cầu | Ngưỡng | Đo tại | Mục tiêu kinh doanh |
+|---|---|---|---|---|
+
+## 6. Danh mục thực thể
+
+Doubles as the data-governance register.
+
+| Thực thể | Mô tả | PII | Lưu trữ | Ước tính khối lượng (N1) | Tăng trưởng |
+|---|---|---|---|---|---|
+
+### Ghi chú lưu trữ
+
+<Retention decisions and their reason. Where a figure is an estimate, mark it
+`[ước tính]` inline (C-5).>
+
+## 7. Điểm tích hợp
+
+| Hệ thống | Hướng | Mục đích | Trao đổi dữ liệu | Đội sở hữu |
+|---|---|---|---|---|
+
+## 8. Bảng thuật ngữ
+
+| Thuật ngữ | Định nghĩa |
+|---|---|
+
+## 9. Luồng nghiệp vụ
+
+*(Bổ sung — nguồn: SRS Omnichannel. Stockbook's SRS carries no diagrams.)*
+
+Mermaid, inline (C-8). At minimum the end-to-end happy path, plus a state
 machine for any entity with more than two states.
 
 ```mermaid
@@ -81,99 +184,38 @@ stateDiagram-v2
   [*] --> new
 ```
 
-## 4. Functional requirements
+## 10. Ma trận phân quyền
 
-Grouped by category. One block per requirement.
+*(Bổ sung — nguồn: SRS Omnichannel. Required only when §3 lists more than one
+role. Stockbook describes auth narratively inside its FRs.)*
 
-### C001 — <category name>
+Deny-by-default; the matrix is the whole authority.
 
-#### FR-<AREA>-001 — <requirement title>
-
-**User story**: As a <persona>, I want <capability>, so that <outcome>.
-**Traces to**: F-003 · AC-007, AC-008 · BR-001
-**Story id**: US1-01
-
-**Behaviour** — numbered steps where order matters:
-
-- **B1** <first step, with its threshold if it has one>
-- **B2** <next>
-
-**Acceptance criteria** — Given / When / Then, one per line, each testable
-without asking a question:
-
-| ID | Given | When | Then |
-|---|---|---|---|
-| AC-007 | | | |
-
-**States** — every state this requirement can be in, and the behaviour in
-each: loading · empty · error *per failure mode* · success · offline ·
-permission-denied · first-run · overflow. C3 draws one frame per state; a
-state missing here is a frame nobody designs and a branch nobody codes.
-
-**Rules applied**: <the `BR/DR/SR/IR` ids this honours, and how>
-**Out of scope for this requirement**: <the adjacent thing a reader assumes>
-
-## 5. Non-functional requirements
-
-Grouped, each with a number, a measurement point and a percentile where one
-applies (C-9).
-
-| ID | Group | Requirement | Threshold | Measured at |
-|---|---|---|---|---|
-| NFR-001 | Performance | | <e.g. <500ms p95> | <e.g. inbound gateway> |
-| NFR-002 | Load | | | |
-| NFR-003 | Availability | | | |
-| NFR-004 | Security | | | |
-| NFR-005 | Compliance | | | |
-| NFR-006 | Usability | | | |
-
-## 6. Permissions matrix
-
-Required whenever more than one role exists. Deny-by-default; the matrix is
-the whole authority.
-
-| # | Function | <ROLE A> | <ROLE B> | Scope | FR |
+| # | Chức năng | <ROLE A> | <ROLE B> | Phạm vi | FR |
 |---|---|---|---|---|---|
-| P01 | | ✅ | ❌ | OWN / TEAM / UNIT / ALL | FR-SEC-001 |
+| P01 | | ✅ | ❌ | OWN / TEAM / UNIT / ALL | FR-001 |
 
-Scope definitions: `OWN` ⊂ `TEAM` ⊂ `UNIT` ⊂ `ALL`, each stated as the
-predicate it compiles to (`assignee_id = user_id`, `unit_id = token.unit_id`).
+Scope definitions stated as the predicate they compile to —
+`OWN` = `assignee_id = user_id`, `UNIT` = `unit_id = token.unit_id`.
 
-## 7. Entity register
+## 11. Truy vết
 
-Doubles as the data-governance record.
+*(Bổ sung — nguồn: SRS Omnichannel. **Not optional**: the framework's trace
+spine cannot be read out of a prose changelog.)*
 
-| Entity | Description | PII | Retention | Volume (Y1) | Growth |
-|---|---|---|---|---|---|
-
-## 8. Integration points
-
-| System | Direction | Purpose | Data exchanged | Owner |
+| Mục SRS | PRD (F / AC) | Quy tắc BRD | Frame Figma | Test case |
 |---|---|---|---|---|
+| FR-001 | F-003 / AC-007 | BR-001 | US1-01 Portfolio / default | TC-014 |
 
-## 9. Traceability
+## 12. Câu hỏi mở
 
-Every row complete. An SRS item with no link up to the PRD is a requirement
-someone invented at stage C (C-7).
-
-| SRS item | PRD (F / AC) | BRD rule | Figma frame | Test case |
-|---|---|---|---|---|
-| FR-CV-001 | F-003 / AC-007 | BR-001 | US1-01 Portfolio / default | TC-014 |
-
-## 10. Glossary
-
-| Term | Definition |
-|---|---|
-
-## 11. Open questions
-
-| ID | Question | Owner | Needed by | Blocks |
+| ID | Câu hỏi | Người phụ trách | Cần trước | Chặn việc gì |
 |---|---|---|---|---|
 | Q-001 | | <a person> | <date> | |
 
-## 12. Version history
+## 13. Lịch sử phiên bản
 
-| Version | Date | Change | Author |
+| Phiên bản | Ngày | Thay đổi | Tác giả |
 |---|---|---|---|
 ```
 
@@ -181,20 +223,21 @@ someone invented at stage C (C-7).
 
 ## DoD — all nine must hold
 
-1. **Every requirement is individually testable** — each AC is a
-   Given/When/Then a QA can write a case from without asking a question.
-2. **Every SRS item traces up to the PRD** in section 9, with no blank cells.
+1. **Every requirement is individually testable** — each AC reads
+   *"Cho …, khi …, thì …"* and a QA can write a case from it without asking a
+   question.
+2. **Every SRS item traces up to the PRD** in §11, with no blank cells.
 3. **Every requirement lists all of its states**, not only the happy path.
-4. **Every NFR carries a number, a measurement point and a percentile** where
-   one applies. No number, no requirement.
-5. **`USn` ids are assigned and stable**, and withdrawn ids keep their number.
-6. **A permissions matrix exists** wherever more than one role exists, with a
-   scope per cell.
-7. **Every entity in the register states PII and retention** — both, for every
-   row, because that pair is what a compliance review asks for first.
-8. **Every integration point names the system and its owner** — "the identity
-   service" fails, "iVND identity service, owned by <team>" passes.
-9. **Flows are mermaid and inline**, not a link to a board.
+4. **Every NFR carries a number, a measurement point and the business goal it
+   serves.** No number, no requirement.
+5. **`FR-###` ids are flat and permanent** — next free number regardless of
+   category, withdrawn ids keep their number, none reused.
+6. **`USn` ids are assigned and stable.**
+7. **A permissions matrix exists** wherever §3 lists more than one role.
+8. **Every entity states PII and retention** — both, every row. That pair is
+   the first thing a compliance review asks for.
+9. **Every integration point names the system and its owning team** — "the
+   identity service" fails, "iVND identity service, owned by <team>" passes.
 
 ## The reviewer pass
 
@@ -211,11 +254,13 @@ Dispatch a fresh agent before G4 and require all four:
 
 - A requirement bundling three checks into one sentence. Split it; each gets
   its own id and its own test.
-- "The system should handle errors gracefully."
+- "Hệ thống phải xử lý lỗi một cách hợp lý."
+- Renumbering `FR-###` to make a category contiguous. Stockbook's SRS records
+  a renumbering event (`FR-030 → FR-031`) precisely because it is expensive;
+  the next free number is always cheaper than a tidy sequence.
 - Provisional `USn` ids, renumbered later — four downstream references break
   and none of them error.
 - Specifying implementation. The SRS says what must be true, not which class
   does it.
-- A trace that lives only in the version-history prose. It is unreadable to
-  every check that matters and it is the one thing an SRS is uniquely able to
-  give the phases after it.
+- Leaving the trace in §13's prose because that is what the reference document
+  does. §11 exists for the checks; §13 exists for people.

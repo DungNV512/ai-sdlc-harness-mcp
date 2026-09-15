@@ -11,11 +11,40 @@ from first principles:
 
 | Source read | What it contributed |
 |---|---|
-| `SRS Omnichannel Phase 1 — Agent Workspace MVP` (MID) | FR-`AREA`-NNN ids · FR↔source mapping table · RBAC matrix with data scope · decision refs `[A-nn]` · mermaid flow/state/sitemap · deleted-id preservation note |
-| `SRS: Stockbook` (SN) | Category ids `C00N` · in-document format declaration · version-history table as changelog · entity register with PII/retention/volume · glossary · Given/When/Then ACs in Vietnamese |
+| `SRS Omnichannel Phase 1 — Agent Workspace MVP` (MID) | FR↔source mapping table · RBAC matrix with data scope · decision refs `[A-nn]` · mermaid flow/state/sitemap · deleted-id preservation note — all **additions**, none of them a conflict with Stockbook (C-0) |
+| `SRS: Stockbook` (SN) | **The house form** (C-0): section skeleton, flat `FR-NNN` ids, Given/When/Then ACs in Vietnamese, NFR grouped by named category. Plus category ids `C00N` · in-document format declaration · version-history changelog · entity register with PII/retention/volume · glossary |
 | `Web cấp đơn iPTI`, `Product Listing — Phúc An Sinh` (PMAP) | Overview block (Nhiệm vụ/Phạm vi/Biz document/Design) · screen table · API environment table (UAT / PROD per domain) · notification spec with field length limits |
 | `DCHAT ADMIN` (SC) | The counter-example — a "PRD" that is a link list and a diagram. Convention C-1 exists because of it. |
 | IPAM Way mindmaps (Bảo an bưu gửi — VNPost / EMS) | Explicit absence (`Không có`) · accountable-per-workstream · in/out scope stated at intent level |
+
+---
+
+## C-0 · Source precedence — Stockbook wins a conflict
+
+When two real documents show different ways of doing the same thing, **the
+Stockbook project's document is the house form.** Stockbook is this
+framework's reference implementation — the harness was built against it — so
+its conventions are the ones the organisation already has muscle memory for.
+
+**A conflict is not the same as a silence**, and the two are resolved
+differently:
+
+| Situation | Resolution |
+|---|---|
+| Both documents do X, differently | **Stockbook's form wins.** |
+| Only one document does X at all | Not a conflict. The section is an *addition*: keep it, and name the source it came from so the team can judge it on its merits. |
+| Neither does X, but the framework spec requires it | The spec wins. A convention neither team happens to practise yet is still a requirement if `stage-*.md` or `traceability.yaml` depends on it. |
+
+The third row matters more than it looks. Stockbook's SRS has no traceability
+table — its trace lives in a prose changelog. That is a silence, not a
+preference, and the framework's own spine (`BR-001 → F-012 → AC-034 →
+US1-02 → code → test → MR`) cannot be read out of prose by any check that
+runs. So the table stays, marked as what it is.
+
+Where a template takes Stockbook's form over another document's, it says so
+inline. Where it keeps an addition the Stockbook document does not have, it
+says that too. No convention in this framework should require trusting
+whoever wrote it.
 
 ---
 
@@ -59,7 +88,7 @@ The id families across the whole framework:
 | `BR/DR/SR/IR-NNN` | BRD (B1) | `BR-001`, `IR-004` |
 | `F-NNN` · `AC-NNN` · `Q-NNN` | PRD (B2) | `F-012`, `AC-034` |
 | `C00N` | PRD/SRS feature category | `C003 — Profile` |
-| `FR-<AREA>-NNN` | SRS (C2) | `FR-CV-001`, `FR-SEC-002` |
+| `FR-NNN` | SRS (C2) | `FR-009`, `FR-061` — flat, Stockbook's form (C-0) |
 | `NFR-NNN` | SRS (C2) | `NFR-015` |
 | `USn-NN` | SRS (C2) | `US1-02` |
 | `A-nn` | Decision register | `A-20` |

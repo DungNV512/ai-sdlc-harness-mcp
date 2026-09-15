@@ -75,12 +75,13 @@ Templates: `vnd.ai-sdlc.function-list/v1`, `vnd.ai-sdlc.srs/v2`.
 **Done when** — all nine must hold:
 
 1. Scope agreed by PM and C-level.
-2. **Every requirement individually testable** — each AC a Given/When/Then a
-   QA can write a case from without asking a question.
+2. **Every requirement individually testable** — each AC reads
+   *"Cho …, khi …, thì …"* and a QA can write a case from it without asking
+   a question.
 3. **Every SRS item traces up to the PRD**, in the table, with no blank cells.
 4. Every requirement lists **all** of its states, not only the happy path.
-5. Every NFR carries **a number, a measurement point and a percentile** where
-   one applies.
+5. Every NFR carries **a number, a measurement point and the business goal it
+   serves**, in one of the five named groups.
 6. **A permissions matrix exists** wherever `define.roles_defined` has more
    than one entry, with a data scope per cell.
 7. **Every entity in the register states PII and retention** — both, every
@@ -89,9 +90,11 @@ Templates: `vnd.ai-sdlc.function-list/v1`, `vnd.ai-sdlc.srs/v2`.
 9. Flows are **mermaid, inline** — not a link to a board a reader may not be
    able to open.
 
-Items 6–8 came from reading the organisation's two real SRSs against each
-other: each had a section the other lacked, and every one of those sections
-turned out to be load-bearing for somebody downstream.
+The SRS's shape is **Stockbook's** — flat `FR-###` ids, its section
+skeleton, its Given/When/Then prose, its five NFR groups — per the source
+precedence rule (C-0 in `document-conventions.md`). Items 6–8 are additions
+from the Omnichannel SRS, kept because each is load-bearing for somebody
+downstream and none of them conflicts with how Stockbook writes.
 
 ### `USn` ids travel further than they look
 
