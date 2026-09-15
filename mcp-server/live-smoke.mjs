@@ -65,6 +65,7 @@
  * reason that looks nothing like a proxy problem.
  */
 import { spawn } from "node:child_process";
+import { loadDotenv } from "./dist/lib/dotenv.js";
 import { listConfluenceSpaces, loadConfigFromEnv as loadConfluence } from "./dist/confluence.js";
 import { listJiraBoards, loadJiraConfigFromEnv } from "./dist/jira.js";
 import { loadGitHubConfigFromEnv } from "./dist/github.js";
@@ -93,6 +94,36 @@ function record(platform, state, detail) {
  * Returns true when a junk credential is correctly rejected, i.e. when what
  * this script observes is actually attributable to our own client.
  */
+/**
+ * Name a token that cannot possibly work, before spending a call on it.
+ *
+ * GitLab issues several kinds of token and only some authenticate the REST
+ * API. A feed token (`glft-`) is for RSS readers and calendar exports; sent
+ * as PRIVATE-TOKEN it earns a 401 that looks exactly like a revoked or
+ * mistyped personal access token, and the reader reasonably concludes the
+ * harness is broken. This turns that into a sentence naming the actual
+ * mistake. It is advisory only: prefixes are configurable on self-hosted
+ * instances, so an unrecognised shape is never treated as a failure.
+ *
+ * https://docs.gitlab.com/security/tokens/
+ */
+const GITLAB_TOKEN_KINDS = {
+  "glpat-": { ok: true, what: "personal access token" },
+  "glft-": { ok: false, what: "feed token", use: "RSS readers and calendar exports only — it cannot call /api/v4 at all" },
+  "gldt-": { ok: false, what: "deploy token", use: "git over HTTPS and the registry, not the REST API" },
+  "glptt-": { ok: false, what: "pipeline trigger token", use: "triggering pipelines, not the REST API" },
+  "glrt-": { ok: false, what: "runner authentication token", use: "registering runners, not the REST API" },
+  "glsoat-": { ok: true, what: "service account token" },
+  "glimt-": { ok: false, what: "incoming mail token", use: "email-in, not the REST API" },
+};
+
+function describeGitLabToken(token) {
+  for (const [prefix, kind] of Object.entries(GITLAB_TOKEN_KINDS)) {
+    if (token.startsWith(prefix)) return { prefix, ...kind };
+  }
+  return null;
+}
+
 async function rejectsJunkCredentials(url, junkHeaders) {
   try {
     const res = await fetch(url, { headers: junkHeaders });
@@ -103,23 +134,99 @@ async function rejectsJunkCredentials(url, junkHeaders) {
   }
 }
 
-/** Run one check. A missing-credentials error is a SKIP; anything else FAILs. */
+/**
+ * Network-level failure codes, as opposed to anything the API said.
+ *
+ * These mean the request never reached the service: DNS did not resolve, the
+ * connection was refused, the TLS handshake failed, a proxy declined the
+ * CONNECT. None of them is evidence about our client code.
+ */
+const UNREACHABLE = new Set([
+  "ENOTFOUND", "EAI_AGAIN", "ECONNREFUSED", "ECONNRESET", "EHOSTUNREACH",
+  "ENETUNREACH", "ETIMEDOUT", "EPROTO", "CERT_HAS_EXPIRED",
+  "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET", "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+]);
+
+/**
+ * A proxy that refuses to open the tunnel, which is what an egress allowlist
+ * looks like from inside. Worth matching separately because undici reports it
+ * as UND_ERR_ABORTED -- a code that also covers ordinary aborts, so the code
+ * alone is not specific enough to treat as "unreachable". The message is:
+ *
+ *   Proxy response (403) !== 200 when HTTP Tunneling
+ *
+ * Without this the whole error surfaces as the bare string "fetch failed",
+ * which is how three platforms came to be reported as broken clients when the
+ * request had not left the machine.
+ */
+const TUNNEL_REFUSED = /Proxy response \((\d+)\)[^]*HTTP Tunneling|proxy.*CONNECT.*(refus|denie)/i;
+
+/** Walk the cause chain -- undici nests the real code one or two levels down. */
+function networkErrorCode(err) {
+  for (let e = err, depth = 0; e && depth < 6; e = e.cause, depth++) {
+    if (typeof e.code === "string" && UNREACHABLE.has(e.code)) return e.code;
+
+    const msg = typeof e.message === "string" ? e.message : "";
+    const tunnel = TUNNEL_REFUSED.exec(msg);
+    if (tunnel) {
+      return tunnel[1]
+        ? `egress proxy refused the tunnel with HTTP ${tunnel[1]}`
+        : "egress proxy refused the tunnel";
+    }
+  }
+  return null;
+}
+
+/**
+ * Run one check.
+ *
+ * Three outcomes, and the distinction between the last two is the whole point
+ * of this script. A missing credential is a SKIP. A host that could not be
+ * reached is also a SKIP -- it says nothing about our code, and calling it a
+ * FAIL sends the reader hunting for a bug in a client that never got to send
+ * a byte. Only an error the service itself produced is a FAIL.
+ */
 async function check(platform, fn) {
   try {
     const detail = await fn();
-    if (detail === null) return; // fn already recorded a SKIP
+    if (detail === null) return; // fn already recorded its own result
     record(platform, "PASS", detail);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+
     if (/Missing required environment variable/.test(msg)) {
       record(platform, "SKIP", "not configured — " + msg.replace(/\..*$/, ""));
-    } else {
-      record(platform, "FAIL", msg.split("\n")[0].slice(0, 160));
+      return;
     }
+
+    const code = networkErrorCode(err);
+    if (code) {
+      record(
+        platform,
+        "SKIP",
+        `host not reachable from here (${code}) — the request never left this ` +
+          `machine, so this is a network or egress-policy result, not a verdict ` +
+          `on the client`
+      );
+      return;
+    }
+
+    record(platform, "FAIL", msg.split("\n")[0].slice(0, 160));
   }
 }
 
-console.log("Live smoke test — one real call per platform, read-only.\n");
+const envSource = loadDotenv();
+console.log("Live smoke test — one real call per platform, read-only.");
+console.log(
+  envSource.file
+    ? `Credentials: ${envSource.applied.length} from ${envSource.file}` +
+        (envSource.shadowed.length
+          ? `, ${envSource.shadowed.length} taken from the environment instead (${envSource.shadowed.join(", ")})`
+          : "")
+    : "Credentials: from the environment only (no .env found)"
+);
+console.log("");
 
 // --- Confluence: list spaces. Pure read, needs no ids, and it is the call
 // that proved read access and add-page permission are separate grants.
@@ -167,6 +274,18 @@ await check("GitHub", async () => {
 // --- GitLab: /version through our own client, same reasoning as GitHub.
 await check("GitLab", async () => {
   const cfg = loadGitLabConfigFromEnv();
+
+  const kind = describeGitLabToken(cfg.token);
+  if (kind && !kind.ok) {
+    record(
+      "GitLab",
+      "FAIL",
+      `GITLAB_TOKEN starts with \`${kind.prefix}\`, which is a ${kind.what} — ${kind.use}. ` +
+        `Create a personal access token (\`glpat-\`) with the \`api\` scope at ` +
+        `<host>/-/user_settings/personal_access_tokens.`
+    );
+    return null;
+  }
 
   if (!(await rejectsJunkCredentials(`${cfg.apiUrl}/version`, { "PRIVATE-TOKEN": "junk-negative-control" }))) {
     record(

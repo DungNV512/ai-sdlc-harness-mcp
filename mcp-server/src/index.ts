@@ -51,6 +51,7 @@ import {
   requestGitLabMrReviewers,
 } from "./gitlab.js";
 import { runClaudeCodeCommand } from "./claude-code.js";
+import { loadDotenv } from "./lib/dotenv.js";
 import { loadTeamsConfigFromEnv, sendTeamsMessage } from "./teams.js";
 import {
   addJiraComment,
@@ -931,9 +932,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 async function main() {
+  // Before the first tool call, not during it. Claude Code starts this server
+  // itself, so an operator who got the credentials wrong finds out here, in
+  // the server's own stderr log, instead of from a tool error several minutes
+  // into a run. The individual clients call this too -- it is cached -- so a
+  // library consumer that never reaches main() is still covered.
+  const env = loadDotenv();
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`ai-sdlc-harness-mcp: server running on stdio (${Object.keys(tools).length} tools)`);
+
+  console.error(
+    `ai-sdlc-harness-mcp: server running on stdio (${Object.keys(tools).length} tools)`
+  );
+
+  // Names only. A value logged here would be a credential in a transcript.
+  const configured = [
+    process.env.ATLASSIAN_EMAIL && process.env.ATLASSIAN_API_TOKEN ? "Atlassian" : null,
+    process.env.GITHUB_TOKEN ? "GitHub" : null,
+    process.env.GITLAB_TOKEN ? "GitLab" : null,
+    process.env.TEAMS_WEBHOOK_URL ? "Teams" : null,
+  ].filter(Boolean);
+
+  if (configured.length === 0) {
+    console.error(
+      "ai-sdlc-harness-mcp: no credentials found. Tools will fail with a named " +
+        "missing-variable error until you create a .env -- see mcp-server/.env.example. " +
+        "If you installed this as a plugin, put it at ~/.config/ai-sdlc-harness/.env: " +
+        "a shell profile does not reach a server the app starts for you."
+    );
+  } else {
+    console.error(
+      `ai-sdlc-harness-mcp: credentials present for ${configured.join(", ")}` +
+        (env.file ? ` (from ${env.file})` : " (from the environment)")
+    );
+  }
 }
 
 main().catch((err) => {

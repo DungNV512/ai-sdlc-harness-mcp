@@ -18,6 +18,7 @@
  */
 
 import { basicAuthHeader, fetchWithRetry, readJsonBody } from "./lib/http.js";
+import { loadDotenv } from "./lib/dotenv.js";
 
 export interface JiraConfig {
   site: string; // e.g. https://your-site.atlassian.net (no trailing slash)
@@ -26,6 +27,7 @@ export interface JiraConfig {
 }
 
 export function loadJiraConfigFromEnv(): JiraConfig {
+  loadDotenv();
   const site = process.env.JIRA_SITE || "https://ipas-tech.atlassian.net";
   const email = process.env.ATLASSIAN_EMAIL;
   const apiToken = process.env.ATLASSIAN_API_TOKEN;

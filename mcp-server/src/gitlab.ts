@@ -34,6 +34,7 @@
  */
 
 import { fetchWithRetry, readJsonBody } from "./lib/http.js";
+import { loadDotenv } from "./lib/dotenv.js";
 
 export interface GitLabConfig {
   apiUrl: string; // e.g. https://gitlab.com/api/v4 (no trailing slash)
@@ -41,6 +42,7 @@ export interface GitLabConfig {
 }
 
 export function loadGitLabConfigFromEnv(): GitLabConfig {
+  loadDotenv();
   const apiUrl = (process.env.GITLAB_API_URL || "https://gitlab.com/api/v4").replace(/\/$/, "");
   const token = process.env.GITLAB_TOKEN;
 

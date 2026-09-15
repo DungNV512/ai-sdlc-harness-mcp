@@ -26,6 +26,7 @@
  */
 
 import { fetchWithRetry } from "./lib/http.js";
+import { loadDotenv } from "./lib/dotenv.js";
 
 const MAX_PAYLOAD_BYTES = 28 * 1024;
 
@@ -44,6 +45,7 @@ export interface TeamsConfig {
 }
 
 export function loadTeamsConfigFromEnv(): TeamsConfig {
+  loadDotenv();
   const webhookUrl = process.env.TEAMS_WEBHOOK_URL;
   if (!webhookUrl) {
     throw new Error(

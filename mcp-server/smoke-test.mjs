@@ -1,13 +1,24 @@
 /**
  * stdio JSON-RPC smoke test: initialize + tools/list, then a few tools/call
  * probes that exercise validation and credential-error paths without needing
- * network access.
+ * network access -- enforced by spawning the server with AI_SDLC_SKIP_DOTENV=1,
+ * see the note at the spawn call.
  *
  * Run: node smoke-test.mjs
  */
 import { spawn } from "node:child_process";
 
-const child = spawn("node", ["dist/index.js"], { stdio: ["pipe", "pipe", "pipe"] });
+// AI_SDLC_SKIP_DOTENV: this file's last two checks assert that a MISSING
+// credential produces a named env-var error. Since the server learned to read
+// a .env, those checks would silently invert on any machine that has one --
+// and they do not merely fail, they start making real outbound calls with
+// whatever credentials that file holds, inside a test whose header promises
+// it needs no network. Observed: both checks came back "HTTP 403" from a live
+// endpoint. The server must be spawned with the .env mechanism switched off.
+const child = spawn("node", ["dist/index.js"], {
+  stdio: ["pipe", "pipe", "pipe"],
+  env: { ...process.env, AI_SDLC_SKIP_DOTENV: "1" },
+});
 
 let buf = "";
 const pending = new Map();

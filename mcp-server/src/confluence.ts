@@ -25,6 +25,7 @@
  */
 
 import { basicAuthHeader, fetchWithRetry, readJsonBody } from "./lib/http.js";
+import { loadDotenv } from "./lib/dotenv.js";
 
 export interface ConfluenceConfig {
   site: string; // e.g. https://your-site.atlassian.net (no trailing slash)
@@ -373,6 +374,7 @@ export async function listConfluenceSpaces(
 }
 
 export function loadConfigFromEnv(): ConfluenceConfig {
+  loadDotenv();
   const site = process.env.CONFLUENCE_SITE;
   const email = process.env.ATLASSIAN_EMAIL;
   const apiToken = process.env.ATLASSIAN_API_TOKEN;

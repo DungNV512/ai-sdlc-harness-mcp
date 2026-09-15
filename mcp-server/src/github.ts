@@ -15,6 +15,7 @@
  */
 
 import { fetchWithRetry, readJsonBody } from "./lib/http.js";
+import { loadDotenv } from "./lib/dotenv.js";
 
 export interface GitHubConfig {
   apiUrl: string; // e.g. https://api.github.com (no trailing slash)
@@ -22,6 +23,7 @@ export interface GitHubConfig {
 }
 
 export function loadGitHubConfigFromEnv(): GitHubConfig {
+  loadDotenv();
   const apiUrl = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/$/, "");
   const token = process.env.GITHUB_TOKEN;
 

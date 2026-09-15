@@ -2,3 +2,13 @@
 # not part of the shipped harness, never meant to be committed.
 .metrics/
 **/.metrics/
+
+# Local credentials. The MCP server reads these at startup (see
+# mcp-server/src/lib/dotenv.ts for the search order). They are secrets:
+# an Atlassian API token, a GitHub PAT, a GitLab PAT, and a Teams webhook
+# URL whose `sig` query parameter IS its authentication. This repo is
+# public, so the only version of this file that may ever be tracked is
+# mcp-server/.env.example, which holds names and never values.
+.env
+.env.*
+!.env.example

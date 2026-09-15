@@ -77,7 +77,9 @@ anyone's session. `plugin/vnd-ai-sdlc/mcp-server/launch.mjs` prefers a built
 checkout at `$AI_SDLC_HARNESS_MCP_SERVER_DIR` when set (so you can iterate
 with just `npm run build`), and falls back to the bundle otherwise.
 
-Copy `.env.example` to `.env` and fill in:
+## Credentials
+
+Copy `.env.example` to `.env` and fill it in:
 
 ```
 ATLASSIAN_EMAIL=you@example.com
@@ -86,12 +88,71 @@ CONFLUENCE_SITE=https://your-site.atlassian.net
 JIRA_SITE=https://your-site.atlassian.net
 GITHUB_TOKEN=...          # a PAT with repo scope (fine-grained or classic)
 GITHUB_API_URL=https://api.github.com   # optional, override for GitHub Enterprise
+GITLAB_TOKEN=glpat-...    # a PERSONAL ACCESS TOKEN -- see the warning below
+GITLAB_API_URL=https://your-host/api/v4
+TEAMS_WEBHOOK_URL=...     # secret: the `sig` parameter is the authentication
 ```
 
 Confluence and Jira share one Atlassian identity, so `ATLASSIAN_EMAIL` /
 `ATLASSIAN_API_TOKEN` cover both tool groups. `CONFLUENCE_SITE` and
 `JIRA_SITE` are usually the same host. GitHub uses a separate Bearer-token
-PAT (`GITHUB_TOKEN`), not Atlassian's Basic auth.
+PAT (`GITHUB_TOKEN`), not Atlassian's Basic auth. GitLab uses a third scheme
+again — its own `PRIVATE-TOKEN` header.
+
+### Where the file has to live
+
+The server searches these in order and reads the first one it finds. **A
+variable already set in the real environment always wins**, so a stale `.env`
+can never shadow a value an operator just exported:
+
+| Order | Path | Use it when |
+|---|---|---|
+| 1 | `$AI_SDLC_ENV_FILE` | you want to name the file explicitly |
+| 2 | `./.env` | running from a terminal in a project |
+| 3 | `<mcp-server>/.env` | working in a source checkout |
+| 4 | `~/.config/ai-sdlc-harness/.env` | **installed as a Claude Code plugin** |
+
+Row 4 is the one that matters for a plugin install, and it is worth being
+blunt about why the obvious alternatives do not work. Claude Code copies each
+plugin into a per-version cache directory and replaces it wholesale on every
+update, so a `.env` left beside the plugin is deleted by the first upgrade.
+And exporting the variables from `~/.zshrc` only reaches processes started by
+a shell: Claude Code starts this server itself, so an app launched from the
+Dock passes on an environment that never saw your profile. The symptom is a
+server that lists all 28 tools and then fails the first real call with
+"Missing required environment variable" on a machine whose owner is certain
+they set it.
+
+```bash
+mkdir -p ~/.config/ai-sdlc-harness
+cp mcp-server/.env.example ~/.config/ai-sdlc-harness/.env
+chmod 600 ~/.config/ai-sdlc-harness/.env
+```
+
+`AI_SDLC_SKIP_DOTENV=1` disables the mechanism entirely. `smoke-test.mjs`
+sets it, because two of its checks assert that a *missing* credential
+produces a named error — without it those checks invert on any machine that
+has a `.env`, and start making live calls inside a test whose header promises
+it needs no network.
+
+The server prints, to stderr, which file it read and which platforms ended up
+configured. Names only, never values.
+
+### GitLab: it must be a *personal access* token
+
+GitLab issues several kinds of token and only some of them authenticate the
+REST API. Only `glpat-` (personal access) and `glsoat-` (service account)
+work here. A feed token (`glft-`) is for RSS readers and calendar exports and
+cannot call `/api/v4` at all; a deploy token (`gldt-`), a pipeline trigger
+token (`glptt-`) and a runner token (`glrt-`) each authenticate something
+else. Sent as `PRIVATE-TOKEN`, every one of them returns a 401 that is
+indistinguishable from a revoked or mistyped PAT — which is exactly how an
+hour gets spent looking for a bug in this client. `npm run smoke` now checks
+the prefix and names the mistake before spending a call on it.
+
+Create one at `<host>/-/user_settings/personal_access_tokens` with the `api`
+scope. See [GitLab's token overview](https://docs.gitlab.com/security/tokens/)
+for the full prefix table.
 
 ## Running as an MCP server
 

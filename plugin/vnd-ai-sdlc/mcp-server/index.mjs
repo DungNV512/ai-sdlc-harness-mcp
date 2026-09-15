@@ -2981,7 +2981,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve.call(this, root, ref);
+      let _sch = resolve2.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -3008,7 +3008,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve(root, ref) {
+    function resolve2(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -3838,7 +3838,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve(baseURI, relativeURI, options) {
+    function resolve2(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const {
         parsed: baseParsed,
@@ -4206,7 +4206,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve,
+      resolve: resolve2,
       resolveComponent,
       equal,
       serialize,
@@ -17082,7 +17082,7 @@ var Protocol = class {
           return;
         }
         const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
         options?.signal?.throwIfAborted();
       }
     } catch (error2) {
@@ -17099,7 +17099,7 @@ var Protocol = class {
    */
   request(request4, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       const earlyReject = (error2) => {
         reject(error2);
       };
@@ -17177,7 +17177,7 @@ var Protocol = class {
           if (!parseResult.success) {
             reject(parseResult.error);
           } else {
-            resolve(parseResult.data);
+            resolve2(parseResult.data);
           }
         } catch (error2) {
           reject(error2);
@@ -17438,12 +17438,12 @@ var Protocol = class {
       }
     } catch {
     }
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve2, reject) => {
       if (signal.aborted) {
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
         return;
       }
-      const timeoutId = setTimeout(resolve, interval);
+      const timeoutId = setTimeout(resolve2, interval);
       signal.addEventListener("abort", () => {
         clearTimeout(timeoutId);
         reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -18319,12 +18319,12 @@ var StdioServerTransport = class {
     this.onclose?.();
   }
   send(message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve2) => {
       const json = serializeMessage(message);
       if (this._stdout.write(json)) {
-        resolve();
+        resolve2();
       } else {
-        this._stdout.once("drain", resolve);
+        this._stdout.once("drain", resolve2);
       }
     });
   }
@@ -18334,7 +18334,7 @@ var StdioServerTransport = class {
 var RETRY_DELAYS_MS = [2e3, 5e3];
 var MAX_ATTEMPTS = 1 + RETRY_DELAYS_MS.length;
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve2) => setTimeout(resolve2, ms));
 }
 function isTransientStatus(status) {
   return status === 429 || status >= 500 && status <= 599;
@@ -18372,6 +18372,101 @@ async function readJsonBody(res) {
   } catch {
     return { raw: text };
   }
+}
+
+// src/lib/dotenv.ts
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+var KNOWN_KEYS = /* @__PURE__ */ new Set([
+  "ATLASSIAN_EMAIL",
+  "ATLASSIAN_API_TOKEN",
+  "CONFLUENCE_SITE",
+  "JIRA_SITE",
+  "GITHUB_TOKEN",
+  "GITHUB_API_URL",
+  "GITLAB_TOKEN",
+  "GITLAB_API_URL",
+  "TEAMS_WEBHOOK_URL"
+]);
+function parseDotenv(text) {
+  const out = {};
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const m = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+    if (!m) continue;
+    const key = m[1];
+    let value = m[2].trim();
+    if (value.startsWith('"') && value.endsWith('"') && value.length > 1 || value.startsWith("'") && value.endsWith("'") && value.length > 1) {
+      value = value.slice(1, -1);
+    } else {
+      const hash = value.indexOf(" #");
+      if (hash >= 0) value = value.slice(0, hash).trim();
+    }
+    out[key] = value;
+  }
+  return out;
+}
+function candidatePaths(serverDir) {
+  const paths = [];
+  const explicit = process.env.AI_SDLC_ENV_FILE;
+  if (explicit) paths.push(resolve(explicit));
+  paths.push(resolve(process.cwd(), ".env"));
+  if (serverDir) {
+    paths.push(resolve(serverDir, ".env"));
+    paths.push(resolve(serverDir, "..", ".env"));
+  }
+  const home = homedir();
+  if (home) {
+    paths.push(join(home, ".config", "ai-sdlc-harness", ".env"));
+  }
+  return [...new Set(paths)];
+}
+var cached2 = null;
+function loadDotenv() {
+  if (cached2) return cached2;
+  if (process.env.AI_SDLC_SKIP_DOTENV === "1") {
+    cached2 = { file: null, applied: [], shadowed: [] };
+    return cached2;
+  }
+  let serverDir;
+  try {
+    serverDir = dirname(dirname(fileURLToPath(import.meta.url)));
+  } catch {
+  }
+  for (const file of candidatePaths(serverDir)) {
+    if (!existsSync(file)) continue;
+    let parsed;
+    try {
+      parsed = parseDotenv(readFileSync(file, "utf8"));
+    } catch (err) {
+      console.error(
+        `ai-sdlc-harness: could not read ${file}: ${err instanceof Error ? err.message : String(err)}`
+      );
+      continue;
+    }
+    const applied = [];
+    const shadowed = [];
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!KNOWN_KEYS.has(key)) continue;
+      if (value === "") continue;
+      if (process.env[key]) {
+        shadowed.push(key);
+        continue;
+      }
+      process.env[key] = value;
+      applied.push(key);
+    }
+    console.error(
+      `ai-sdlc-harness: loaded ${applied.length} credential(s) from ${file}` + (shadowed.length ? ` (${shadowed.length} already set in the environment)` : "")
+    );
+    cached2 = { file, applied, shadowed };
+    return cached2;
+  }
+  cached2 = { file: null, applied: [], shadowed: [] };
+  return cached2;
 }
 
 // src/confluence.ts
@@ -18547,6 +18642,7 @@ async function listConfluenceSpaces(cfg, input = {}) {
   };
 }
 function loadConfigFromEnv() {
+  loadDotenv();
   const site = process.env.CONFLUENCE_SITE;
   const email2 = process.env.ATLASSIAN_EMAIL;
   const apiToken = process.env.ATLASSIAN_API_TOKEN;
@@ -18565,6 +18661,7 @@ function loadConfigFromEnv() {
 
 // src/github.ts
 function loadGitHubConfigFromEnv() {
+  loadDotenv();
   const apiUrl = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/$/, "");
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
@@ -18652,6 +18749,7 @@ async function requestGitHubPrReviewers(cfg, input) {
 
 // src/gitlab.ts
 function loadGitLabConfigFromEnv() {
+  loadDotenv();
   const apiUrl = (process.env.GITLAB_API_URL || "https://gitlab.com/api/v4").replace(/\/$/, "");
   const token = process.env.GITLAB_TOKEN;
   if (!token) {
@@ -18856,7 +18954,7 @@ function buildArgs(input) {
   return args;
 }
 function runClaudeCodeCommand(input) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     const args = buildArgs(input);
     const child = spawn("claude", args, { cwd: input.cwd });
     let stdout = "";
@@ -18872,7 +18970,7 @@ function runClaudeCodeCommand(input) {
     });
     child.on("close", (code, signal) => {
       const exitCode = code ?? (signal === "SIGTERM" ? 143 : -1);
-      resolve({ exitCode, stdout, stderr });
+      resolve2({ exitCode, stdout, stderr });
     });
   });
 }
@@ -18886,6 +18984,7 @@ var SEVERITY_COLOR = {
   danger: "attention"
 };
 function loadTeamsConfigFromEnv() {
+  loadDotenv();
   const webhookUrl = process.env.TEAMS_WEBHOOK_URL;
   if (!webhookUrl) {
     throw new Error(
@@ -18975,6 +19074,7 @@ async function sendTeamsMessage(cfg, input) {
 
 // src/jira.ts
 function loadJiraConfigFromEnv() {
+  loadDotenv();
   const site = process.env.JIRA_SITE || "https://ipas-tech.atlassian.net";
   const email2 = process.env.ATLASSIAN_EMAIL;
   const apiToken = process.env.ATLASSIAN_API_TOKEN;
@@ -19807,9 +19907,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request4) => {
   }
 });
 async function main() {
+  const env = loadDotenv();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`ai-sdlc-harness-mcp: server running on stdio (${Object.keys(tools).length} tools)`);
+  console.error(
+    `ai-sdlc-harness-mcp: server running on stdio (${Object.keys(tools).length} tools)`
+  );
+  const configured = [
+    process.env.ATLASSIAN_EMAIL && process.env.ATLASSIAN_API_TOKEN ? "Atlassian" : null,
+    process.env.GITHUB_TOKEN ? "GitHub" : null,
+    process.env.GITLAB_TOKEN ? "GitLab" : null,
+    process.env.TEAMS_WEBHOOK_URL ? "Teams" : null
+  ].filter(Boolean);
+  if (configured.length === 0) {
+    console.error(
+      "ai-sdlc-harness-mcp: no credentials found. Tools will fail with a named missing-variable error until you create a .env -- see mcp-server/.env.example. If you installed this as a plugin, put it at ~/.config/ai-sdlc-harness/.env: a shell profile does not reach a server the app starts for you."
+    );
+  } else {
+    console.error(
+      `ai-sdlc-harness-mcp: credentials present for ${configured.join(", ")}` + (env.file ? ` (from ${env.file})` : " (from the environment)")
+    );
+  }
 }
 main().catch((err) => {
   console.error("Fatal error running server:", err);

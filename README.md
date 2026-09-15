@@ -81,6 +81,8 @@ machine-checkable DoDs and, for a while, had none of its own.
 | — | `review-checklist.md`, `security-checklist.md`, `definition-of-done.md` | ✅ done — Phase 5/6 agents were instructed to walk files that existed nowhere |
 | — | Document conventions C-0…C-10 + `check-conventions.py` | ✅ done — the checker passes on this repo, and now also fails on a dead `docs/ai-sdlc/` path |
 | — | `npm run smoke` — one read-only call per platform, with a junk-credential negative control | ✅ done — only the Claude Code trigger PASSes from the dev container; the rest SKIP, GitHub included, because a SKIP the script cannot attribute is not allowed to become a PASS |
+| — | Credential loading from a `.env` file, searched in four places incl. `~/.config/ai-sdlc-harness/` | ✅ done — a shell profile cannot reach a server the app starts for you, so a plugin install had no working credential path at all |
+| — | `wire-test.mjs` — every credential proven to reach the wire in the right header and scheme | ✅ done — four auth schemes, checked against a local server that records what arrived |
 | — | 23 versioned artefact templates, incl. IPAM Way and OMVP | ✅ done |
 | — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v3`) + generation in `/plan-feature` | ✅ done |
 | — | Publishing artefacts to Confluence automatically | ❌ **not built** — only `/gate` calls `create_confluence_page`. Stage A/B/C artefacts reach the manifest, not the wiki |
