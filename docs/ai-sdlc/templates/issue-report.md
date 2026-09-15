@@ -14,6 +14,9 @@ the problem without reading the proposed answer first.
 ```markdown
 # Issue: <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
+- **Sources**: <every upstream artefact this was derived from, linked>
 **1. What happened**
 <What you observed, as you observed it. Behaviour, not diagnosis.>
 

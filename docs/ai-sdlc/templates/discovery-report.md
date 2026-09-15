@@ -13,6 +13,7 @@ Fix A2; do not extend the report.
 ```markdown
 # Discovery Report — <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Date**: <YYYY-MM-DD>   **PM**: <name>   **For gate**: G1
 - **Sources**: Problem Statement Canvas <link> · Market Scan <link> ·
   Feasibility Assessment <link>
@@ -71,6 +72,12 @@ cannot answer three of the five, the report is not ready for the gate.>
 
 <Anything the AI flagged as inconsistent between A2 and A3, and how it was
 settled. Resolved, not deleted.>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

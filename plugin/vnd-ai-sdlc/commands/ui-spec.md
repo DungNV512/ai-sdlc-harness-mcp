@@ -8,6 +8,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 
 Stage C3. See `docs/ai-sdlc/stage-c-design.md`. Default agent: `px-designer`.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 Produces `docs/specs/<slug>/ui-spec.md` against `vnd.ai-sdlc.ui-spec/v1`,
 alongside the Figma frames themselves.
 

@@ -15,6 +15,9 @@ underneath it.
 ```markdown
 # Systems & Projects Context — <initiative>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
+- **Sources**: <every upstream artefact this was derived from, linked>
 - **Filled by**: <PM name> + <Architect name>, together, on <YYYY-MM-DD>
 - **From**: G1 Go decision <link to minutes>
 
@@ -65,6 +68,12 @@ pieces this initiative would have to touch, work around, or fix first.
 
 <Systems considered and excluded, with the reason. Cheap to write, and it
 stops the same question being reopened at C1.>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

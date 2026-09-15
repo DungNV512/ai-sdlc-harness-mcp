@@ -13,6 +13,8 @@ only confirm that the code does what it does.
 ```markdown
 # Test Strategy — <initiative>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
 - **QE owner**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0
 - **Sources**: PRD <link> · SRS <link>
 
@@ -72,6 +74,12 @@ named is a surprise.>
 - **Entry**: <when testing can start for a slice>
 - **Exit**: <when it is done — thresholds met, no open critical defects,
   golden diffs reviewed>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

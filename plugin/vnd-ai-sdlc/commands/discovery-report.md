@@ -9,6 +9,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task
 Stage A4. See `docs/ai-sdlc/stage-a-discovery.md`. This is the only document that goes
 into G1, so everything about it is shaped by a 60-minute meeting.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 Produces `docs/specs/<slug>/discovery-report.md` against
 `vnd.ai-sdlc.discovery-report/v1`.
 

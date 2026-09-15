@@ -32,6 +32,7 @@ per-feature — one owner, a fixed review cadence, no gate.
 | A2 Problem framing | Problem Statement Canvas | AI generator + a human working session | `/problem-canvas` |
 | A3 Market & feasibility scan | Market Scan Report, Feasibility Assessment | AI generator + tools, human verifies figures | `/market-scan` |
 | A4 Discovery synthesis | Discovery Report | AI generator + mandatory AI reviewer | `/discovery-report` |
+| A5 Team alignment | IPAM Way canvas, OMVP charter | PM + the working team, AI scribes | `/ipam-way` |
 | G1 Feasibility gate | Decision + minutes | **Humans only** | `/gate G1` records the outcome |
 
 At G1 the AI does not participate. It does not attend, summarise, recommend,
@@ -153,6 +154,40 @@ Template: `vnd.ai-sdlc.discovery-report/v1`.
 question. If they have to ask "so whose problem is this again?", the report
 failed. If it needs more than five pages, the problem statement was never
 sharp enough — the fix is upstream in A2, not a longer document.
+
+---
+
+## A5 · Team alignment — IPAM Way and OMVP
+
+**In** — Discovery Report, plus the working team in a room.
+
+**Do** — fill the **IPAM Way canvas**: who is involved (Interbeing), what we
+intend and the scope boundary (Intention), what is true today across four
+lenses (Insight), what is new (Innovation), what must not break (Integrity),
+the single problem (P), the approach (A), and the work broken down by domain
+with a named accountable person and a date per workstream (M). Then the
+**OMVP charter**: objectives, the 4D timeframe, owners, outputs and budget —
+one per flow where the initiative has several.
+
+This is the organisation's own method, not an import. Two completed boards
+were read to derive the template; both leave the P block empty, which is why
+this phase makes P a required single sentence — a canvas whose Insight lists
+eleven problems and whose Approach names one solution has an unstated
+selection step, and that step is where scope creep begins.
+
+**Out** — `IPAM WAY` and `OMVP` → Confluence. Templates:
+`vnd.ai-sdlc.ipam-way/v1`, `vnd.ai-sdlc.omvp/v1`.
+
+**Done when** — every stakeholder function has a row (`Không có` where there
+is no representative), all eight Insight cells are answered, the P block is
+one sentence, **every M row carries a named person and a date**, and every
+OMVP phase names the artefact it produces rather than repeating the phase
+name.
+
+The M-row check is the one that bites. The real boards carry `?` in the
+timeline column for roughly half their workstreams, and every one of those is
+work that nobody has committed to — discovered at G2, or discovered in
+stage D at ten times the price.
 
 ---
 

@@ -31,7 +31,7 @@ anything. Default agent: `architect`.
      planning.
    - **It does not exist** → create it from
      `docs/ai-sdlc/templates/traceability.yaml`
-     (`vnd.ai-sdlc.traceability/v2`), filling only what you can actually
+     (`vnd.ai-sdlc.traceability/v3`), filling only what you can actually
      determine:
      - `slug`, `title`, `created`, `status: draft`;
      - `sources` — from the ticket id/URL passed as the second argument

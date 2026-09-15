@@ -7,6 +7,12 @@ where teams most often cut corners.
 
 Owner: **FS 18 PM**, co-owner **FS 20 Architect**.
 
+Every artefact in this stage obeys `docs/ai-sdlc/document-conventions.md` —
+the house rules derived from the organisation's own shipped documents: an
+identity block, a version-history changelog, permanent ids declared in the
+document, explicit absence, inline markers for unconfirmed claims, and a
+mapping table up to the artefact above.
+
 The traceability spine starts here and runs the length of the process:
 
 ```
@@ -60,15 +66,17 @@ as a question, never as an entry.
 
 ## B1 · BRD — Business Requirements
 
-**In** — the approved Discovery Report, Company Context Doc, Systems &
-Projects Context Doc, and a description of how the business works today.
+**In** — the approved Discovery Report, the IPAM Way canvas (its Interbeing
+block is the stakeholder table and its Integrity block is the constraint
+list), Company Context Doc, Systems & Projects Context Doc, and a description
+of how the business works today.
 
 **Do** — draft Business Context and Stakeholders, with success metrics linked
 to a company OKR. Then draft business rules in four families with ids. The PM
 edits. An AI reviewer checks five angles. C-level approves.
 
 **Out** — `BRD`, five sections, rules carrying `BR / DR / SR / IR-NNN` →
-Confluence. Template: `vnd.ai-sdlc.brd/v1`.
+Confluence. Template: `vnd.ai-sdlc.brd/v2`.
 
 ### The four rule families
 
@@ -79,7 +87,7 @@ Confluence. Template: `vnd.ai-sdlc.brd/v1`.
 | `SR` | Security | authn, authz, confidentiality, audit, segregation of duties |
 | `IR` | Integration | interaction with **named** systems |
 
-**Done when** — all seven must hold:
+**Done when** — all nine must hold:
 
 1. Every rule has a **unique id**.
 2. **No rule contradicts another.** `SR` against `BR` is where they hide.
@@ -92,6 +100,9 @@ Confluence. Template: `vnd.ai-sdlc.brd/v1`.
 6. **The Architect has confirmed in writing** that no technical constraint is
    missing.
 7. **Regulated domain: legal has confirmed** before finalisation.
+8. **Every stakeholder function has a row**, `Không có` where there is no
+   representative — an omitted row reads as "not yet asked".
+9. **Version history carries a row per change** since 1.0.
 
 ### The reviewer pass — five angles
 
@@ -140,7 +151,7 @@ MoSCoW **and the two-way check**. The PM decides priority — not the AI. An AI
 reviewer reads it from two angles.
 
 **Out** — `PRD`, seven sections, ids `F-NNN · AC-NNN · Q-NNN` → Confluence.
-Template: `vnd.ai-sdlc.prd/v1`.
+Template: `vnd.ai-sdlc.prd/v2`.
 
 ### The two-way trace check
 
@@ -155,7 +166,7 @@ This is the most valuable mechanical check in the upstream half, because it
 catches in an afternoon what otherwise surfaces as an argument in sprint
 three.
 
-**Done when** — all eight must hold:
+**Done when** — all eleven must hold:
 
 1. Every Must-have feature has **≥ 2 testable acceptance criteria**.
 2. No feature contradicts a BRD rule.
@@ -165,6 +176,14 @@ three.
 6. **QA can write test cases from it** without asking a basic question.
 7. Personas state their source: **validated or assumption**.
 8. Every open question has **a named owner and a deadline**.
+9. **Every role the system will have has a persona row with a data scope** —
+   administrative and operational roles included. A role that first appears
+   at C2 arrives with no persona and no acceptance criteria — a real SRS in
+   this organisation had to backfill three of them.
+10. **The two-way coverage result is recorded**, both directions, with
+    `Không có` where a direction is clean.
+11. **Version history carries a row per change** since 1.0, each saying what
+    changed rather than "updated".
 
 Items 5 and 6 are literal. Give the PRD to an engineer and a QE; what they
 have to ask you is the list of what is missing.

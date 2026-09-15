@@ -1,10 +1,21 @@
 # PRD template — Product Requirements Document
 
-`schema: vnd.ai-sdlc.prd/v1`
+`schema: vnd.ai-sdlc.prd/v2`
 
-The B2 artefact. Seven sections. Where the BRD says what must be true, the
-PRD picks what we will build — and the check that makes it trustworthy is
-bidirectional coverage against the BRD.
+The B2 artefact. Where the BRD says what must be true, the PRD picks what we
+will build — and the check that makes it trustworthy is bidirectional
+coverage against the BRD.
+
+Conventions: `docs/ai-sdlc/document-conventions.md`.
+
+**Why v2 carries more than the real examples do.** The organisation's
+strongest real documents are its SRSs; its weakest is the PRD — the one read
+for this revision (`DCHAT ADMIN`, space SC) is a link list and a topology
+diagram, with its own PRD and SRS links empty. The result downstream is
+visible in the Omnichannel SRS, which had to note *"PRD thiếu persona
+TEAM_LEAD, PLATFORM_ADMIN và UNIT_ADMIN — PO cần backfill"*: three roles that
+reached the design stage undefined because the PRD never named them. Sections
+2, 4 and 8 below exist to make that specific failure impossible.
 
 ```markdown
 # PRD — <initiative>
@@ -12,7 +23,12 @@ bidirectional coverage against the BRD.
 - **Version**: 1.0   **Status**: Draft | In review | Approved
 - **PM**: <name>   **Date**: <YYYY-MM-DD>
 - **Sources**: BRD <link> (approved) · Company Context <link> ·
-  Systems & Projects Context <link> · Discovery Report <link>
+  Systems & Projects Context <link> · Discovery Report <link> ·
+  IPAM Way canvas <link>
+
+**Id formats used in this document**: `F-NNN` (feature) · `AC-NNN` ·
+`Q-NNN` · `C00N` (feature category) · `A-nn` (decision register). Ids are
+permanent; a cut feature keeps its number and is marked `Won't` (C-3).
 
 ## 1. Overview
 
@@ -21,9 +37,14 @@ only this should know what the thing is.>
 
 ## 2. Personas
 
-| Persona | Who they are | What they are trying to do | Source |
-|---|---|---|---|
-| | | | **validated** (research, <date>) or **assumption** (ICP) |
+| Persona | Who they are | What they are trying to do | Data scope | Source |
+|---|---|---|---|---|
+| | | | OWN / TEAM / UNIT / ALL | **validated** (research, <date>) or **assumption** (ICP) |
+
+**Every role the system will have gets a row — including administrative and
+operational roles nobody demos.** The Data scope column is what stage C turns
+into a permissions matrix; a role that first appears at C2 arrives with no
+scope, no persona and no acceptance criteria.
 
 The Source column is a DoD item, not decoration. A persona built from six
 interviews and one built from a guess look identical on the page and lead to
@@ -44,9 +65,12 @@ frames against them.>
 MoSCoW. **The PM sets priority — not the AI, and not the loudest
 stakeholder.**
 
-| ID | Feature | Priority | Traces to | Acceptance criteria |
-|---|---|---|---|---|
-| F-001 | | Must / Should / Could / Won't | BR-003, SR-002 | AC-001, AC-002 |
+Group features under a category id (`C00N`); stage C2 reuses those same
+categories to group its requirements.
+
+| ID | Category | Feature | Priority | Traces to | Acceptance criteria |
+|---|---|---|---|---|---|
+| F-001 | C001 | | Must / Should / Could / Won't | BR-003, SR-002 | AC-001, AC-002 |
 
 ## 5. Acceptance criteria
 
@@ -67,6 +91,20 @@ list without reasons gets re-litigated every sprint.>
 | ID | Question | Owner | Needed by | Blocks |
 |---|---|---|---|---|
 | Q-001 | | <a person, by name> | <date> | <what cannot start> |
+
+## 8. Coverage check
+
+The output of the two-way trace check, recorded rather than described.
+
+| Direction | Result |
+|---|---|
+| Rules with no feature | <ids, or `Không có`> |
+| Features tracing to no rule | <ids, or `Không có`> |
+
+## 9. Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
 ```
 
 ## The two-way trace check
@@ -92,7 +130,7 @@ Produce the check as a table in the review, not as a claim that it was done:
 | BR-001 | F-003, F-007 | | F-003 | BR-001 |
 | BR-002 | **nothing** | | F-011 | **nothing — scope creep** |
 
-## DoD — all eight
+## DoD — all eleven
 
 1. Every Must-have feature has **≥ 2 testable acceptance criteria**.
 2. **No feature contradicts a BRD business rule.**
@@ -102,6 +140,12 @@ Produce the check as a table in the review, not as a claim that it was done:
 6. **QA can write test cases from it** without asking a basic question.
 7. **Personas state their source** — validated or assumption.
 8. **Every open question has a named owner and a deadline.**
+9. **Every role the system will have has a persona row with a data scope** —
+   including administrative and operational roles. This is the one that stops
+   a role reaching C2 undefined.
+10. **The coverage check is recorded in section 8**, both directions, with
+    `Không có` where a direction is clean (C-4).
+11. **Version history has a row per change** since 1.0 (C-2).
 
 Items 5 and 6 are not rhetorical. Before declaring B2 done, give the PRD to
 an engineer and a QE and ask them for an estimate and a test case. What they

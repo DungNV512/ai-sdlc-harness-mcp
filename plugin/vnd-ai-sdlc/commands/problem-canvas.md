@@ -8,6 +8,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 Stage A2. See `docs/ai-sdlc/stage-a-discovery.md`.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 Produces `docs/specs/<slug>/problem-statement-canvas.md` against
 `vnd.ai-sdlc.problem-statement-canvas/v1`. One A4 page, written for the
 **root** problem.
