@@ -42,11 +42,23 @@ are saturated with Flutter/BLoC specifics inside).
 
 ## Install
 
+These are Claude Code commands (the `/` syntax), not VSCode. Run them inside Claude Code.
+
+**Option 1: From GitHub (when pushed)**
+
 ```
 /plugin marketplace add DungNV512/ai-sdlc-harness-mcp
 /plugin install vnd-ai-sdlc@ai-sdlc-harness-mcp
 # For a Flutter project following Stockbook's conventions:
 /plugin install vnd-ai-sdlc-stockbook@ai-sdlc-harness-mcp
+```
+
+**Option 2: Local development (from a repo clone)**
+
+```
+/plugin marketplace add /path/to/ai-sdlc-harness-mcp/plugin
+/plugin install vnd-ai-sdlc
+/plugin install vnd-ai-sdlc-stockbook  # optional, for Flutter projects only
 ```
 
 Then, **once per repo**, bootstrap the harness into it:
