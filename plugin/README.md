@@ -3,13 +3,26 @@
 Two Claude Code plugins, distributed from this one marketplace:
 
 - **[`vnd-ai-sdlc/`](./vnd-ai-sdlc)** — the framework-agnostic layer, and the
-  one most teams install: 3 agents (`architect`, `reviewer`, `security`), 10
-  process commands (`abort`, `adr`, `agent-metrics`, `plan-feature`, `pr`,
-  `review`, `security-review`, `spec`, `status`, `update-memory`), 4 skill
-  lifecycle commands (`skill-new`, `skill-submit`, `skill-approve`,
-  `skill-sync` — see below), 1 cross-cutting skill (`threat-modeling`), 3
-  hooks, and a **self-contained bundled MCP server** exposing Confluence,
-  Jira, GitHub and Claude Code trigger tools.
+  one most teams install:
+  - **5 agents** — `pm-analyst` (FS 18), `architect` (FS 20), `px-designer`
+    (FS 19), `security` (FS 14), `reviewer`.
+  - **The upstream half** — `/idea-card`, `/problem-canvas`, `/market-scan`,
+    `/discovery-report`, `/ipam-way` (Stage A, A1–A5); `/context-doc`,
+    `/brd`, `/prd` (Stage B); `/sa-view`, `/srs`, `/ui-spec`,
+    `/test-strategy` (Stage C); and `/gate`, which records all five human
+    gates G1–G5 and refuses a record missing the evidence that decision
+    carries.
+  - **Delivery** — `abort`, `adr`, `agent-metrics`, `plan-feature`, `pr`,
+    `review`, `security-review`, `spec`, `status`, `update-memory`,
+    `notify-merge`.
+  - **4 skill lifecycle commands** — `skill-new`, `skill-submit`,
+    `skill-approve`, `skill-sync` (see below).
+  - **23 versioned artefact templates** plus a document standard
+    (`document-conventions.md`) and the checker that enforces it, all
+    scaffolded into a consuming repo by `/harness-init`.
+  - 1 cross-cutting skill (`threat-modeling`), 3 hooks, and a
+    **self-contained bundled MCP server** exposing Confluence, Jira, GitHub,
+    GitLab, Teams and Claude Code trigger tools.
 - **[`vnd-ai-sdlc-stockbook/`](./vnd-ai-sdlc-stockbook)** — the Stockbook
   (Flutter) project overlay: 3 agents (`flutter-engineer`, `qa`, `release`),
   10 commands (`api-from-openapi`, `audit`, `i18n`, `implement`,
@@ -105,6 +118,46 @@ its own isolated cache directory
 exist and the server silently never started. Everything a plugin needs at
 runtime has to live inside that plugin's own subtree — which is why the
 bundle ships where it does.
+
+## The document standard, and the check that enforces it
+
+`/harness-init` scaffolds `docs/ai-sdlc/document-conventions.md` — ten rules
+(C-0…C-10) every phase artefact inherits: an identity block, a version-history
+changelog, permanent ids declared inside the document, explicit absence
+(`Không có` rather than a blank), inline markers for unconfirmed claims and
+unverified numbers, decision references, a mapping table up to the artefact
+above, inline mermaid diagrams, and non-functional requirements that carry
+numbers.
+
+They were derived by reading the organisation's own shipped documents, not
+invented: two real SRSs, two Product Listing pages, a PRD and two completed
+IPAM Way boards. **C-0 is the one that settles arguments** — where two of
+those documents do the same thing differently, the Stockbook project's form
+wins; where only one does it at all, that is an addition rather than a
+conflict.
+
+It also scaffolds `docs/ai-sdlc/check-conventions.py`:
+
+```
+python3 docs/ai-sdlc/check-conventions.py
+```
+
+It verifies the identity blocks, the version histories, schema-version
+consistency between each template and the command that produces it, and that
+every schema id referenced has a template and vice versa. Exit 1 on failure —
+run it before any commit under `docs/ai-sdlc/`.
+
+It earns its place: writing it immediately surfaced that `/srs` had spent a
+release declaring `vnd.ai-sdlc.srs/v2` in its header while every one of its
+steps still described v1's shape, and that seventeen of twenty-two templates
+silently failed the conventions the standard claims they all inherit. Neither
+was visible to `claude plugin validate`, to the JSON parsers, or to a person
+reading quickly.
+
+**Running it on real work**: [`docs/ai-sdlc/cookbook.md`](../docs/ai-sdlc/cookbook.md)
+has the command sequences — the full A→G4 path, the short path for a bug fix,
+what to do when a gate returns NEED-DATA, when a rule changes after sign-off,
+and when a role turns up that the PRD never named.
 
 ## The skill lifecycle: create → submit → approve → sync
 

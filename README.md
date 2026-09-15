@@ -3,7 +3,7 @@
 Integration + distribution layer for an AI-assisted SDLC harness built
 around the Stockbook app project.
 
-This repo is planned to hold two halves:
+This repo holds two halves:
 
 - **[`mcp-server/`](./mcp-server)** — an MCP (Model Context Protocol)
   server exposing Confluence, Jira, GitHub, GitLab, Microsoft Teams and a
@@ -26,6 +26,33 @@ This repo is planned to hold two halves:
   `plugin/README.md` for install steps, the bugs that real install caught,
   and the known limitations it surfaced.
 
+## Start here
+
+| You want to | Read |
+|---|---|
+| Install it and run it on real work | [`plugin/README.md`](./plugin/README.md), then [`docs/ai-sdlc/cookbook.md`](./docs/ai-sdlc/cookbook.md) |
+| Know what each phase produces and when it is done | [`stage-a-discovery.md`](./docs/ai-sdlc/stage-a-discovery.md) · [`stage-b-definition.md`](./docs/ai-sdlc/stage-b-definition.md) · [`stage-c-design.md`](./docs/ai-sdlc/stage-c-design.md) |
+| Write one of the documents | the matching file in [`docs/ai-sdlc/templates/`](./docs/ai-sdlc/templates), plus [`document-conventions.md`](./docs/ai-sdlc/document-conventions.md) |
+| Know the MCP tools and their env vars | [`mcp-server/README.md`](./mcp-server/README.md) |
+
+## The document standard
+
+Every phase output follows one set of conventions (C-0…C-10) in
+[`docs/ai-sdlc/document-conventions.md`](./docs/ai-sdlc/document-conventions.md),
+derived by reading the organisation's own shipped documents rather than from
+first principles — two real SRSs, two Product Listing pages, a PRD, and two
+completed IPAM Way boards.
+
+The rule that settles arguments: **where two of those documents do the same
+thing differently, the Stockbook project's form wins** (C-0). A silence is
+not a conflict — where only one document does something at all, it is an
+addition, kept and labelled with its source.
+
+`python3 docs/ai-sdlc/check-conventions.py` enforces the conventions
+mechanically and exits non-zero on failure. It is scaffolded into consuming
+repos by `/harness-init`, and it exists because this framework insists on
+machine-checkable DoDs and, for a while, had none of its own.
+
 ## Status
 
 | Phase | What | Status |
@@ -40,8 +67,13 @@ This repo is planned to hold two halves:
 | 4 | Microsoft Teams (`send_teams_message` via a Workflows webhook) | ✅ built — **not live-tested**: the org egress allowlist blocks `powerplatform.com`, so the POST must be verified from a machine that can reach Microsoft |
 | 2 | Confluence full parity (`get`/`update`/`search`/`list_spaces`) | ✅ built — **not live-tested**: `ipas-tech.atlassian.net` is egress-blocked. Logic covered by unit tests |
 | 3 | GitLab tools (5, read+create surface) | ✅ built — **not live-tested**: both `gitlab.com` and `gitlab-new.vndirect.com.vn` are egress-blocked. Logic covered by unit tests |
-| A | Stage A discovery (A0–A4) + G1 feasibility gate, with `/idea-card`, `/problem-canvas`, `/discovery-report`, `/gate` | ✅ built — A3 (market/feasibility scan) has a contract but no command yet |
+| A | Stage A discovery A0–A5 + G1, with `/idea-card`, `/problem-canvas`, `/market-scan`, `/discovery-report`, `/ipam-way` | ✅ built — **not yet run on a real feature** |
+| B | Stage B definition B0–B2 + G2/G3, with `/context-doc`, `/brd`, `/prd` | ✅ built — **not yet run on a real feature** |
+| C | Stage C design C1–C5 + G4, with `/sa-view`, `/srs`, `/ui-spec`, `/test-strategy`, `/security-review` | ✅ built — **not yet run on a real feature** |
+| — | Document conventions C-0…C-10 + `check-conventions.py` | ✅ done — the checker passes on this repo |
+| — | 23 versioned artefact templates, incl. IPAM Way and OMVP | ✅ done |
 | — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v3`) + generation in `/plan-feature` | ✅ done |
+| — | Publishing artefacts to Confluence automatically | ❌ **not built** — only `/gate` calls `create_confluence_page`. Stage A/B/C artefacts reach the manifest, not the wiki |
 
 ### What "built but not live-tested" means here
 
@@ -63,6 +95,15 @@ behave as documented. Run `npm test` in `mcp-server/`, then make one real
 call per platform from a machine with network access before trusting them.
 
 See `mcp-server/README.md` for the tool reference and setup instructions.
+
+### What "built but not yet run" means for the upstream stages
+
+Stages A, B and C are complete specifications with working commands, a
+template per artefact, and DoDs the commands enforce. What has **not**
+happened is a single real feature going A → G4 through them. Until that run
+exists, treat the upstream half as a well-specified system that has never met
+a deadline, a stakeholder who will not answer, or a document someone refuses
+to sign.
 
 ## Why this exists
 
