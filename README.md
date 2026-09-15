@@ -30,7 +30,12 @@ This repo holds two halves:
 
 | You want to | Read |
 |---|---|
+| **Full system overview** (architecture, agents, commands, plugins) | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| **Look up any command by name** (input/output/owner/next step) | [`docs/ai-sdlc/COMMANDS.md`](./docs/ai-sdlc/COMMANDS.md) |
 | Install it and run it on real work | [`plugin/README.md`](./plugin/README.md), then [`docs/ai-sdlc/cookbook.md`](./docs/ai-sdlc/cookbook.md) |
+| Understand the SDLC flow (A → B → C → gates → delivery) | [`ARCHITECTURE.md#sdlc-flow-stages-a--b--c--gate--delivery`](./ARCHITECTURE.md#sdlc-flow-stages-a--b--c--gate--delivery) |
+| Know which agent does what | [`ARCHITECTURE.md#agents-roster`](./ARCHITECTURE.md#agents-roster) |
+| Quick lookup: command by use case | [`docs/ai-sdlc/COMMANDS.md#quick-lookup-by-use-case`](./docs/ai-sdlc/COMMANDS.md#quick-lookup-by-use-case) |
 | Know what each phase produces and when it is done | [`stage-a-discovery.md`](./docs/ai-sdlc/stage-a-discovery.md) · [`stage-b-definition.md`](./docs/ai-sdlc/stage-b-definition.md) · [`stage-c-design.md`](./docs/ai-sdlc/stage-c-design.md) |
 | Write one of the documents | the matching file in [`docs/ai-sdlc/templates/`](./docs/ai-sdlc/templates), plus [`document-conventions.md`](./docs/ai-sdlc/document-conventions.md) |
 | Know the MCP tools and their env vars | [`mcp-server/README.md`](./mcp-server/README.md) |
