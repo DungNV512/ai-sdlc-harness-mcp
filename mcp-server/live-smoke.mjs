@@ -31,6 +31,26 @@
  * only if something that was configured actually broke, so this is safe to
  * wire into CI where only some credentials exist.
  *
+ * THE NEGATIVE CONTROL, AND WHY A PASS IS NARROWER THAN IT LOOKS
+ *
+ * Before trusting a success, each HTTP check first sends a deliberately junk
+ * credential and requires the API to reject it. If junk is accepted, then
+ * something between this process and the API is authenticating on our behalf
+ * and a green result says nothing about our own client -- so the check reports
+ * SKIP with that reason rather than PASS.
+ *
+ * This is not hypothetical. The cloud container this was written in proxies
+ * github.com with credentials injected: `GET /user` with no token at all
+ * answers 200. Without the control, this script reported "GitHub PASS,
+ * authenticated" for a token that read `ghp_fakeTokenForNegativeControl`. A
+ * verification script that produces a false pass is worse than no script,
+ * because it turns an unknown into a wrong answer.
+ *
+ * So the three states mean:
+ *   PASS  junk was rejected AND our credential worked -- attributable to us
+ *   FAIL  junk was rejected AND our credential did not work -- a real defect
+ *   SKIP  not configured, OR something authenticates for us, OR unreachable
+ *
  * ENVIRONMENT
  *
  *   Confluence   ATLASSIAN_EMAIL, ATLASSIAN_API_TOKEN, CONFLUENCE_SITE
@@ -58,6 +78,29 @@ function record(platform, state, detail) {
   results.push({ platform, state, detail });
   const mark = { PASS: " PASS ", FAIL: " FAIL ", SKIP: " skip " }[state];
   console.log(`${mark} ${platform.padEnd(12)} ${detail}`);
+}
+
+/**
+ * Negative control: call an endpoint that MUST reject a junk credential.
+ *
+ * Some environments put an authenticating proxy between the process and the
+ * API -- this container does, for github.com. There, `GET /user` with no
+ * token at all still answers 200, so a "PASS" proves the proxy works and says
+ * nothing about whether our client sends its credential correctly. That is a
+ * false pass, and a false pass in a verification script is worse than no
+ * script: it converts an unknown into a wrong answer.
+ *
+ * Returns true when a junk credential is correctly rejected, i.e. when what
+ * this script observes is actually attributable to our own client.
+ */
+async function rejectsJunkCredentials(url, junkHeaders) {
+  try {
+    const res = await fetch(url, { headers: junkHeaders });
+    return !res.ok;
+  } catch {
+    // Unreachable host: we cannot tell either way, so do not claim we can.
+    return false;
+  }
 }
 
 /** Run one check. A missing-credentials error is a SKIP; anything else FAILs. */
@@ -95,32 +138,51 @@ await check("Jira", async () => {
   return `listJiraBoards returned ${n} board(s)`;
 });
 
-// --- GitHub: /rate_limit through our own client. It proves auth and the
-// retry path without needing a repo, an issue or a workflow run to exist.
+// --- GitHub: /user through our own client. /user is used rather than
+// /rate_limit precisely because /rate_limit answers 200 unauthenticated, so it
+// cannot tell a working credential from no credential at all.
 await check("GitHub", async () => {
   const cfg = loadGitHubConfigFromEnv();
-  const res = await fetchWithRetry(`${cfg.apiUrl}/rate_limit`, {
-    headers: {
-      Authorization: `Bearer ${cfg.token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
+  const ghHeaders = (token) => ({
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
   });
+
+  if (!(await rejectsJunkCredentials(`${cfg.apiUrl}/user`, ghHeaders("junk-token-negative-control")))) {
+    record(
+      "GitHub",
+      "SKIP",
+      "something here authenticates for us — a junk token is accepted, so a pass would prove nothing about our client"
+    );
+    return null;
+  }
+
+  const res = await fetchWithRetry(`${cfg.apiUrl}/user`, ghHeaders(cfg.token));
   const body = await readJsonBody(res);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${JSON.stringify(body).slice(0, 120)}`);
-  const remaining = body?.rate?.remaining;
-  return `authenticated; ${remaining ?? "?"} core requests remaining`;
+  return `our credential authenticated as ${body?.login ?? "?"} (junk token correctly rejected)`;
 });
 
 // --- GitLab: /version through our own client, same reasoning as GitHub.
 await check("GitLab", async () => {
   const cfg = loadGitLabConfigFromEnv();
+
+  if (!(await rejectsJunkCredentials(`${cfg.apiUrl}/version`, { "PRIVATE-TOKEN": "junk-negative-control" }))) {
+    record(
+      "GitLab",
+      "SKIP",
+      "junk token accepted or host unreachable — cannot attribute a pass to our client"
+    );
+    return null;
+  }
+
   const res = await fetchWithRetry(`${cfg.apiUrl}/version`, {
     headers: { "PRIVATE-TOKEN": cfg.token },
   });
   const body = await readJsonBody(res);
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${JSON.stringify(body).slice(0, 120)}`);
-  return `authenticated; GitLab ${body?.version ?? "?"}`;
+  return `our credential authenticated; GitLab ${body?.version ?? "?"} (junk token correctly rejected)`;
 });
 
 // --- Teams: the only capability is sending, so a read-only check is not

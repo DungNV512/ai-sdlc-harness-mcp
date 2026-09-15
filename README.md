@@ -66,7 +66,7 @@ machine-checkable DoDs and, for a while, had none of its own.
 |---|---|---|
 | 1 | Jira MCP tools (12) | ✅ done |
 | 1 | Confluence: `create_confluence_page` | ✅ done |
-| 3 | GitHub tools (3, read+create surface, live-tested) | ✅ done |
+| 3 | GitHub tools (4, read+create surface) | ✅ done — a real issue was created end to end, but see the note below: **this environment proxies github.com with injected credentials**, so our own auth path is not what that test proved |
 | 5 | Claude Code trigger tool (`run_claude_code_command`) | ✅ done — verified against a mock CLI, not a real install |
 | 6 | Plugin extraction (`plugin/`, marketplace.json, Standard/overlay split) | ✅ done — real-installed + verified with a live Claude Code CLI (see `plugin/README.md`) |
 | 7 | Self-contained plugin: MCP server bundled inside `vnd-ai-sdlc` + dev-override launcher | ✅ done |
@@ -80,7 +80,7 @@ machine-checkable DoDs and, for a while, had none of its own.
 | P–O | Delivery half: Phases 0–8 + G5, DoD per phase, `delivery-phases.md` | ✅ **specified** — Phase 7.5 (close trace + publish reader copy) named as **not built** |
 | — | `review-checklist.md`, `security-checklist.md`, `definition-of-done.md` | ✅ done — Phase 5/6 agents were instructed to walk files that existed nowhere |
 | — | Document conventions C-0…C-10 + `check-conventions.py` | ✅ done — the checker passes on this repo, and now also fails on a dead `docs/ai-sdlc/` path |
-| — | `npm run smoke` — one real read-only call per platform | ✅ done — GitHub and the Claude Code trigger PASS; the other four report SKIP until run from a machine that can reach them |
+| — | `npm run smoke` — one read-only call per platform, with a junk-credential negative control | ✅ done — only the Claude Code trigger PASSes from the dev container; the rest SKIP, GitHub included, because a SKIP the script cannot attribute is not allowed to become a PASS |
 | — | 23 versioned artefact templates, incl. IPAM Way and OMVP | ✅ done |
 | — | `traceability.yaml` schema (`vnd.ai-sdlc.traceability/v3`) + generation in `/plan-feature` | ✅ done |
 | — | Publishing artefacts to Confluence automatically | ❌ **not built** — only `/gate` calls `create_confluence_page`. Stage A/B/C artefacts reach the manifest, not the wiki |
@@ -91,8 +91,19 @@ Three integrations are complete, build clean, and pass unit and stdio
 JSON-RPC tests, but have never made a real call — every one of their hosts
 (`gitlab.com`, `gitlab-new.vndirect.com.vn`, `ipas-tech.atlassian.net`,
 `powerplatform.com`) is refused by this environment's egress allowlist,
-which permits `github.com`. That is why GitHub is the one platform with a
-genuine end-to-end verification behind it.
+which permits `github.com`.
+
+**And `github.com` is a weaker exception than it first appeared.** Running
+`npm run smoke` from the development container revealed that the agent proxy
+in front of it *injects GitHub credentials*: `GET /user` with no token at all
+answers 200, and the first version of the smoke script duly reported
+"GitHub PASS, authenticated" for a token reading
+`ghp_fakeTokenForNegativeControl`. The GitHub issue created in an earlier
+session was real, so the request and response shapes are genuinely exercised
+— but *which* credential authenticated it is not something any test run from
+that container can establish. The smoke script now sends a junk credential
+first and downgrades itself to SKIP when the junk is accepted, rather than
+claiming a pass it cannot attribute.
 
 So the request/response shapes are exercised against stubs, not against the
 real APIs. The places where those APIs differ in ways a naive port gets
