@@ -50,7 +50,9 @@ whoever wrote it.
 
 ## C-1 · Every artefact declares its own identity
 
-The first block of every document, before any content:
+The first block of every **phase artefact**, before any content. (The PR
+body, the Jira ticket and `SKILL.md` are exempt — they are formats, not
+documents with an owner and a gate.)
 
 ```
 - **Version**: <n.n>   **Status**: Draft | In review | Approved | Superseded
@@ -65,10 +67,17 @@ own PRD and SRS links are empty.
 
 ## C-2 · Version history is a table, and it is a changelog
 
-Last section of every artefact. Not a field — a table, one row per change:
+Last section of every artefact **that is signed off at a gate**. Not a
+field — a table, one row per change:
 
 | Version | Date | Change | Author |
 |---|---|---|---|
+
+**Exempt**: the pre-gate one-shot captures — Idea Card, Issue Report, Problem
+Statement Canvas, Market Scan, Feasibility Assessment. They are superseded by
+the Discovery Report rather than revised, so a changelog on them records
+nothing anyone reads. **Also exempt**: the PR body, the Jira ticket and
+`SKILL.md`, which are formats rather than versioned documents with an owner.
 
 The real SRSs carry 20+ rows of this and it is the single most consulted part
 of the document after the requirements themselves. Write what changed, not
@@ -175,6 +184,19 @@ Grouped by category — performance, load, availability, security, compliance,
 usability — each with a threshold, a measurement point and a percentile where
 one applies. `API <500ms p95 đo tại Inbound Gateway` is a requirement.
 `Fast` is not.
+
+## Checking this file mechanically
+
+`docs/ai-sdlc/check-conventions.py` enforces C-1, C-2, C-3's version
+consistency and the template↔command references, and exits non-zero on any
+failure. Run it before a commit that touches `docs/ai-sdlc/`.
+
+It exists because this framework insists on machine-checkable DoDs and then
+had none of its own, and the cost showed up immediately: `/srs` spent a
+release declaring `vnd.ai-sdlc.srs/v2` in its header while its steps still
+described v1's shape, and seventeen templates silently failed the conventions
+this very file declares. Neither was visible to anything but a person reading
+carefully.
 
 ## C-10 · One artefact, one written side
 

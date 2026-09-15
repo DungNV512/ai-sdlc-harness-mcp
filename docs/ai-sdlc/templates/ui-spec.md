@@ -13,7 +13,7 @@ more than the wait.
 ```markdown
 # UI Spec — <initiative>
 
-- **Designer**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0
+- **Designer**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Figma file**: <name> — key `<published key>`
 - **Sources**: PRD (personas, journeys) <link> · SRS <link>
 
@@ -79,6 +79,12 @@ value is a copy that drifts.>
 - **Round**: <date>   **With**: <who — actual representative users, not the team>
 - **Changed as a result**: <what. "No changes" after a real round is a
   finding worth recording; "no round held" fails the DoD.>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

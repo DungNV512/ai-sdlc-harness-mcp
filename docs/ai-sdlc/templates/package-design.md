@@ -12,7 +12,7 @@ Integration Design.
 ```markdown
 # Package Design — <initiative>
 
-- **Architect**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0
+- **Architect**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Sources**: BRD <link> · Systems & Projects Context <link>
 
 ## Module structure
@@ -63,6 +63,12 @@ Feeds C5's threat model; cite the `SR-NNN` rules this satisfies.>
 
 **No rule in the BRD may be violated.** If the design cannot satisfy one, the
 design is wrong or the rule is wrong — resolve it before C2, not during D.
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

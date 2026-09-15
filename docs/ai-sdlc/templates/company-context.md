@@ -23,6 +23,8 @@ Flutter engineers are on the KRX migration until March".
 ```markdown
 # Company Context
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Sources**: <every upstream artefact this was derived from, linked>
 - **Owner**: <name, role — one person, not a team>
 - **Last reviewed**: <YYYY-MM-DD>
 - **Review cadence**: <quarterly | per project | on material change>
@@ -83,6 +85,12 @@ Flutter engineers are on the KRX migration until March".
   "specific and defensible advantage" test draws on>
 - **Where we are behind**: <honestly; a context doc that only lists strengths
   produces feasibility assessments that only find opportunities>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

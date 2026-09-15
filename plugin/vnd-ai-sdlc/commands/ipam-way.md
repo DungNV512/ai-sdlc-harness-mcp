@@ -10,6 +10,11 @@ Stage A5. See `docs/ai-sdlc/stage-a-discovery.md`. Produces
 `docs/specs/<slug>/ipam-way.md` against `vnd.ai-sdlc.ipam-way/v1`, and
 `docs/specs/<slug>/omvp.md` against `vnd.ai-sdlc.omvp/v1`.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 IPAM Way is the organisation's own method, not an import: **I**nterbeing ·
 **I**ntention · **I**nsight · **I**nnovation · **I**ntegrity, then **P**roblem,
 **A**pproach, **M**obilise. This command scribes it. It does not invent its

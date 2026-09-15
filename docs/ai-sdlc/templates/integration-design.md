@@ -14,7 +14,7 @@ not licence to invent the shape you would prefer.
 ```markdown
 # Integration Design — <initiative>
 
-- **Architect**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0
+- **Architect**: <name>   **Date**: <YYYY-MM-DD>   **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Sources**: BRD (IR rules) <link> · Systems & Projects Context <link>
 
 ## Contracts consumed
@@ -61,6 +61,12 @@ is on call.>
 
 | Entity | System of record | Who may write | Cached here? | Staleness tolerated |
 |---|---|---|---|---|
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

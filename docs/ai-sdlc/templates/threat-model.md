@@ -11,8 +11,12 @@ by a C-level at a gate. Driven by `/security-review` and the
 ---
 
 schema: vnd.ai-sdlc.threat-model/v1
+version: 1.0
+status: Draft | In review | Approved
 slug: <feature-slug>
 owner: <FS 14 AppSec name>
+date: <YYYY-MM-DD>
+sources: BRD <link> · SRS <link> · C1 SA View <link>
 based_on:
   c1: <link to Package/Integration Design>
   c2: <link to Function List/SRS>
@@ -61,3 +65,8 @@ carry-forward.
 - Every finding carries a severity.
 - Every residual risk above Low has a **signed** acceptance row — a
   mitigation plan with no sign-off is not risk acceptance.
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|

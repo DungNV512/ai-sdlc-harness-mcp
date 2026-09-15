@@ -9,6 +9,9 @@ something that already exists and is already better?
 ```markdown
 # Market Scan — <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
+- **Sources**: <every upstream artefact this was derived from, linked>
 - **From**: Problem Statement Canvas <link>
 - **Date**: <YYYY-MM-DD>   **Analyst**: <name>   **Verified by**: <human name>
 

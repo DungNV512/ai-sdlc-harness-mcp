@@ -10,6 +10,9 @@ on the Company Context Doc's real capacity, real debt and real constraints.
 ```markdown
 # Feasibility Assessment — <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
+- **Sources**: <every upstream artefact this was derived from, linked>
 - **From**: Problem Statement Canvas <link> · Company Context Doc <link>
 - **Date**: <YYYY-MM-DD>   **Assessed with**: <Architect / Tech Lead name>
 

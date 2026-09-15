@@ -8,6 +8,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 Stage C4. See `docs/ai-sdlc/stage-c-design.md`. Owner: FS 22 Quality Engineering.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 Produces `docs/specs/<slug>/test-strategy.md` against
 `vnd.ai-sdlc.test-strategy/v1`.
 

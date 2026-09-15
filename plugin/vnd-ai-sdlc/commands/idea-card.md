@@ -8,6 +8,11 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 Stage A1. See `docs/ai-sdlc/stage-a-discovery.md` for where this sits.
 
+**Conventions**: `docs/ai-sdlc/document-conventions.md` — the identity block,
+version history, declared permanent ids, explicit absence (`Không có`), inline
+markers for unconfirmed claims, and the mapping table up to the artefact above.
+Where two of the organisation's real documents disagree, Stockbook's form wins (C-0).
+
 Takes a raw signal and produces `docs/specs/<slug>/idea-card.md` against
 `vnd.ai-sdlc.idea-card/v1`. The whole job is separating three things that
 arrive fused together: what was **observed**, what we **infer**, and what the

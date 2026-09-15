@@ -230,11 +230,81 @@ to guess what it was handed. Write all of these, each only if missing (or with
   (`vnd.ai-sdlc.test-strategy/v1`), and `threat-model.md`
   (`vnd.ai-sdlc.threat-model/v1`).
 - `docs/ai-sdlc/document-conventions.md` — **write this one first.** It is
-  the house rules every other artefact inherits (identity block, version
-  history, permanent ids, explicit absence, unconfirmed markers, decision
-  refs, mapping tables, mermaid-inline diagrams, numeric NFRs). Every template
-  below references it, so a repo that has the templates and not this file has
-  eleven documents each re-deciding its own conventions.
+  the house rules every other artefact inherits. Every template below
+  references it, so a repo that has the templates and not this file has
+  twenty documents each re-deciding its own conventions. **Inline the body
+  below** — do not write a pointer to the plugin's copy (see the `.mcp.json`
+  bug).
+
+  ```markdown
+  # Document conventions — the rules every phase output obeys
+
+  `schema: vnd.ai-sdlc.document-conventions/v1`
+
+  ## C-0 · Source precedence
+  When two of this organisation's real documents do the same thing
+  differently, the **Stockbook** project's document is the house form. A
+  conflict is not a silence: where only one document does X at all, X is an
+  *addition* — keep it and name its source. Where neither does X but a
+  `stage-*.md` or `traceability.yaml` depends on it, the spec wins.
+
+  ## C-1 · Identity block
+  First block of every phase artefact: `Version` · `Status` · `Owner` (a
+  person, by name) · `Date` · `Sources` (every upstream artefact, linked).
+
+  ## C-2 · Version history
+  Last section of every artefact that is **signed off at a gate**: a table
+  `Version | Date | Change | Author`, one row per change, saying what changed
+  rather than "updated". Pre-gate one-shot captures (Idea Card, Issue Report,
+  Problem Canvas, Market Scan, Feasibility Assessment) are exempt — they are
+  superseded by the Discovery Report rather than revised.
+
+  ## C-3 · Ids are permanent, and declared
+  Declare the format before first use (`**Định dạng**: FR-###`). Families:
+  `BR/DR/SR/IR-NNN` (BRD) · `F-NNN`/`AC-NNN`/`Q-NNN` (PRD) · `C00N` category
+  · `FR-NNN` + `NFR-NNN` + `USn-NN` (SRS) · `A-nn` decision · `EC-nn` edge
+  case · `TM-nn` threat. A withdrawn item keeps its number, marked withdrawn
+  with a date and a reason. Never renumber, never reuse — `USn` ids reach
+  Figma frame names, task filenames and test names, and a renumber breaks all
+  four without erroring.
+
+  ## C-4 · Absence is written down
+  `Không có` (considered, there is none) · `PENDING — <reason>` (applies, not
+  done) · `Out of scope — <where handled>`. Silence is none of these and is
+  always a defect.
+
+  ## C-5 · Unconfirmed content is marked at the claim
+  `*(cần xác nhận — <who>)*` and `[ước tính]`, inline next to the claim or the
+  number — never in a footnote.
+
+  ## C-6 · Decisions are referenced, not re-argued
+  Maintain `docs/specs/<slug>/decisions.md` (`ID | Decision | Date | Decided
+  by | Supersedes`) and cite `A-nn` from downstream rules.
+
+  ## C-7 · Mapping table up to the artefact above
+  PRD, SRS, Test Strategy and UI Spec each end with a table mapping their own
+  ids up one level. This is what `/gate` and the two-way trace check read.
+
+  ## C-8 · Diagrams are mermaid, inline
+  Flows, state machines and sitemaps in the document. Link out only for Figma
+  (published file key, never `unsaved-*`) and data catalogues.
+
+  ## C-9 · NFRs carry numbers
+  Grouped by category, each with a threshold, a measurement point and a
+  percentile where one applies.
+
+  ## C-10 · One artefact, one written side
+  Confluence-written artefacts are authored by people and ingested; repo-
+  written artefacts are authored in git and published read-only with a
+  do-not-edit banner. A hand-edited read-only render raises
+  `drift: upstream_edited` and blocks.
+  ```
+- `docs/ai-sdlc/check-conventions.py` — the mechanical check for everything
+  above (C-1, C-2, schema-version consistency, template↔command references).
+  Copy it in and tell the user to run it before any commit touching
+  `docs/ai-sdlc/`. Without it the conventions are a document nobody can
+  enforce, which is the state that let a command declare one schema version
+  while describing another.
 - `docs/ai-sdlc/stage-a-discovery.md`, `stage-b-definition.md` and `stage-c-design.md` — the upstream
   stages and the G1–G4 gates.
   Every upstream command — `/idea-card`, `/problem-canvas`, `/market-scan`,
@@ -261,6 +331,7 @@ to guess what it was handed. Write all of these, each only if missing (or with
   | A2 Problem framing | Problem Statement Canvas | `/problem-canvas` |
   | A3 Market & feasibility scan | Market Scan, Feasibility Assessment | not built |
   | A4 Discovery synthesis | Discovery Report | `/discovery-report` |
+  | A5 Team alignment | IPAM Way canvas, OMVP charter | `/ipam-way` |
   | G1 Feasibility gate | Decision + minutes | `/gate G1` records it |
 
   ## Definitions of done
@@ -281,6 +352,11 @@ to guess what it was handed. Write all of these, each only if missing (or with
     reviewer pass (logical gaps · assumptions treated as fact · the five
     hardest questions). Longer than five pages means A2 was not sharp
     enough; fix it upstream rather than compressing.
+  - **A5** — every stakeholder function has a row (`Không có` where there is
+    no representative, never an omitted row) · all eight Insight cells
+    answered · the Problem block is one sentence · **every Mobilise row
+    carries a named person and a date** (`?` is not a date) · every OMVP
+    phase names the artefact it produces, not the phase name again.
 
   ## G1 — hard gate
 

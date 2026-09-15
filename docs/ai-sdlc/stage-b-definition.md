@@ -166,7 +166,7 @@ This is the most valuable mechanical check in the upstream half, because it
 catches in an afternoon what otherwise surfaces as an argument in sprint
 three.
 
-**Done when** — all ten must hold:
+**Done when** — all eleven must hold:
 
 1. Every Must-have feature has **≥ 2 testable acceptance criteria**.
 2. No feature contradicts a BRD rule.
@@ -182,6 +182,8 @@ three.
    this organisation had to backfill three of them.
 10. **The two-way coverage result is recorded**, both directions, with
     `Không có` where a direction is clean.
+11. **Version history carries a row per change** since 1.0, each saying what
+    changed rather than "updated".
 
 Items 5 and 6 are literal. Give the PRD to an engineer and a QE; what they
 have to ask you is the list of what is missing.

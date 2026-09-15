@@ -9,7 +9,7 @@ is why the DoD requires PM and C-level consensus on it rather than on prose.
 ```markdown
 # Function List — <initiative>
 
-- **Author**: <Architect / BA>   **Date**: <YYYY-MM-DD>   **Version**: 1.0
+- **Author**: <Architect / BA>   **Date**: <YYYY-MM-DD>   **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Sources**: BRD <link> · PRD <link> · Package Design <link> ·
   Integration Design <link>
 
@@ -31,6 +31,12 @@ than scope entering at B.>
 ## Out of scope at function level
 
 <Functions considered and excluded, with reasons, agreed by PM and C-level.>
+
+## Version history
+
+| Version | Date | Change | Author |
+|---|---|---|---|
+
 ```
 
 ## DoD

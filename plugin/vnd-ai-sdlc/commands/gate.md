@@ -47,6 +47,11 @@ Then the per-gate obligations:
 - `NO-GO` → `reason`, and `submitter_notified` (the date the person who
   raised it was told).
 - `NEED-DATA` → `needed_data`, `data_owner`, `return_by`. All three.
+- `GO` → require `discovery.ipam_way` and `discovery.omvp` in the manifest.
+  A GO commits people and money, and A5 is where that commitment acquires a
+  named owner and a date per workstream. Recording GO with those two
+  `PENDING` means the gate approved work nobody has been assigned. Say which
+  is missing and offer `/ipam-way <slug>` rather than writing the record.
 
 ### G2 — BRD sign-off, **two parts, both required**
 1. `c_level_approved` — the one-hour approval of Business Context and
@@ -79,6 +84,12 @@ a row per output — Package Design, Integration Design, Function List, SRS,
 UI Spec, Test Strategy, Threat Model — with its owner, whether its DoD is
 met, and the sign-off date.
 
+**One mechanical check before recording**: if `define.roles_defined` holds
+more than one role, `design.permissions_matrix` must be `true`. More than one
+role with no permissions matrix means the SRS described authorisation in
+prose, and prose is what produced the three roles that reached design
+undefined in the document this rule came from.
+
 **Any output short of its DoD → the gate is `DOD-NOT-MET` and stage P must
 not start.** Do not record a partial sign-off as approved with notes.
 
@@ -109,6 +120,9 @@ Stop, explain, write nothing when:
 - **G3 has only one of its two meetings.**
 - **G4 is missing any stage C output**, or records one as signed without its
   DoD met.
+- **G4 with `define.roles_defined` > 1 and `design.permissions_matrix:
+  false`.**
+- **G1 `GO` with `discovery.ipam_way` or `discovery.omvp` still `PENDING`.**
 
 These are refusals, not warnings. Do not write a partial record with a `TODO`.
 
@@ -152,8 +166,9 @@ was configured. Not a failure.
 
 ## Step 6 — Report
 
-Print what was written and the next step: `/context-doc` after G1 GO, `/prd`
-after G2, `/sa-view` after G3, stage P after G4, `/notify-merge` after G5.
+Print what was written and the next step: `/ipam-way` then `/context-doc`
+after G1 GO, `/prd` after G2, `/sa-view` after G3, stage P after G4,
+`/notify-merge` after G5.
 
 ## Anti-patterns to refuse
 

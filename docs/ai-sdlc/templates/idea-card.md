@@ -14,6 +14,7 @@ wearing the source's name.
 ```markdown
 # Idea Card — <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
 - **Source**: <email / chat / meeting notes / Issue Report id> — <date>
 - **Raised by**: <name, role>
 - **Recorded by**: <name>

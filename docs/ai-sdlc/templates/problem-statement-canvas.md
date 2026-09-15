@@ -12,6 +12,9 @@ finished — go back and find what they are symptoms of.
 ```markdown
 # Problem Statement — <short handle>
 
+- **Version**: 1.0   **Status**: Draft | In review | Approved
+- **Owner**: <a person, by name>   **Date**: <YYYY-MM-DD>
+- **Sources**: <every upstream artefact this was derived from, linked>
 - **From**: Idea Card <link>
 - **Working session**: <date> with <the person who raised it>
 - **Owner**: <PM>
