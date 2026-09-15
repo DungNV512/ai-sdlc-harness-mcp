@@ -15,8 +15,8 @@ Complete overview of the system architecture, SDLC flow, agents, plugins, and co
 │  │                                                              │ │
 │  │  • 5 Agents (pm-analyst, architect, px-designer,           │ │
 │  │             security, reviewer)                            │ │
-│  │  • 10 Commands (/plan-feature, /spec, /pr, /review, ...)  │ │
-│  │  • 1 Cross-cutting Skill (threat-modeling)                │ │
+│  │  • 29 Commands (Stage A/B/C + delivery + skill cycle)     │ │
+│  │  • 2 Skills (threat-modeling, project-toolchain)          │ │
 │  │  • 3 Hooks (git integration)                               │ │
 │  │  • Bundled MCP Server (self-contained)                    │ │
 │  └────────────────────────────────────────────────────────────┘ │
@@ -25,8 +25,8 @@ Complete overview of the system architecture, SDLC flow, agents, plugins, and co
 │  │  vnd-ai-sdlc-stockbook Plugin (Flutter Overlay)            │ │
 │  │                                                              │ │
 │  │  • 3 Agents (flutter-engineer, qa, release)               │ │
-│  │  • 10 Commands (scaffold-feature, implement, test, ...)   │ │
-│  │  • 27 Flutter/Mobile Skills                                │ │
+│  │  • 10 Commands (scaffold-feature, implement, test, ...)    │ │
+│  │  • 30 Flutter/Mobile Skills                                │ │
 │  │  • 7 Dart-aware Hooks                                       │ │
 │  │  • 0 MCP Servers (uses Standard's bundle)                 │ │
 │  └────────────────────────────────────────────────────────────┘ │
@@ -36,11 +36,11 @@ Complete overview of the system architecture, SDLC flow, agents, plugins, and co
                               │ calls
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│         MCP Server (17 tools across 5 platforms)                │
+│         MCP Server (28 tools across 6 platforms)                │
 │                                                                   │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
 │  │Confluence│  │  Jira    │  │  GitHub  │  │  GitLab  │       │
-│  │  1 tool  │  │ 12 tools │  │ 3 tools  │  │ 5 tools  │       │
+│  │ 5 tools  │  │ 12 tools │  │ 4 tools  │  │ 5 tools  │       │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
 │                                                                   │
 │  ┌──────────────┐  ┌──────────────────────────────────────┐   │
@@ -72,11 +72,10 @@ Complete overview of the system architecture, SDLC flow, agents, plugins, and co
 | A0 | Human intake | Human | Problem statement | Jira ticket |
 | A1 | `/idea-card <slug>` | PM | Idea Card | `docs/specs/<slug>/idea-card.md` |
 | A2 | `/problem-canvas <slug>` | PM + originator | Problem Canvas | `docs/specs/<slug>/problem-statement-canvas.md` |
-| A3 | `/market-scan <slug>` | Humans only | Market Scan | `docs/specs/<slug>/market-scan.md` |
-| A3 | `/feasibility-assessment <slug>` | Humans only | Feasibility Assessment | `docs/specs/<slug>/feasibility-assessment.md` |
+| A3 | `/market-scan <slug>` | AI drafts, human verifies figures | Market Scan **and** Feasibility Assessment | `docs/specs/<slug>/` |
 | A4 | `/discovery-report <slug>` | pm-analyst agent + review | Discovery Report | `docs/specs/<slug>/discovery-report.md` |
 | A5 | `/ipam-way <slug>` | PM + Architect | IPAM Way Canvas | `docs/specs/<slug>/ipam-way.md` |
-| A5 | `/omvp-charter <slug>` | PM | OMVP Charter | `docs/specs/<slug>/omvp-charter.md` |
+| A5 | (same command) | PM | OMVP Charter | `docs/specs/<slug>/omvp.md` |
 | G1 | `/gate G1 <slug>` | Humans (CEO/C-level) | Gate Decision + Evidence | `docs/specs/<slug>/traceability.yaml` |
 
 **G1 Decision Logic**:
@@ -122,7 +121,7 @@ Complete overview of the system architecture, SDLC flow, agents, plugins, and co
 | C2 | `/srs <slug>` | architect | Function List + SRS (flat FR-###) | 9 items |
 | C3 | `/ui-spec <slug>` | px-designer | Figma frames (stable key) + design tokens | WCAG 2.1 AA |
 | C4 | `/test-strategy <slug>` | qa-engineer | Test Strategy (pyramid + thresholds) | Fixed numbers + every AC sketched |
-| C5 | `/threat-modeling <slug>` | security | Threat Model (STRIDE per feature) | Risk acceptance signed |
+| C5 | `/security-review <slug>` | security | Threat Model (STRIDE per feature) | Risk acceptance signed |
 | G4 | `/gate G4 <slug>` | All C owners | Design Sign-off | Per-output + version control on |
 
 **G4 Decision**:
@@ -269,11 +268,9 @@ plugin/vnd-ai-sdlc/
     └── index.mjs                       # self-contained bundle
 ```
 
-**MCP Tools** (17 total):
-- Confluence: 1
-- Jira: 12
-- GitHub: 3
-- Teams: 1
+**MCP Tools** (28 total):
+- Confluence: 5 · Jira: 12 · GitHub: 4
+- GitLab: 5 · Teams: 1 · Claude Code trigger: 1
 
 ### vnd-ai-sdlc-stockbook (Overlay, Flutter-Specific)
 

@@ -25,15 +25,12 @@ Frame the root problem on a one-page canvas (WHO / WHAT / WHY IT MATTERS / WHY N
 Scan the market landscape and competitive position.
 - **Input**: `problem-statement-canvas.md`
 - **Output**: `docs/specs/<slug>/market-scan.md`
-- **Owner runs**: PM + Architect (human work, no AI command)
-- **Next**: `/feasibility-assessment`
-
-### `/feasibility-assessment <slug>`
-Assess technical and organizational feasibility.
-- **Input**: `market-scan.md`
-- **Output**: `docs/specs/<slug>/feasibility-assessment.md`
-- **Owner runs**: PM + Architect (human work, no AI command)
+- **Owner runs**: AI drafts; a human verifies every figure against its source
+- **Output (2nd)**: `docs/specs/<slug>/feasibility-assessment.md`
 - **Next**: `/discovery-report`
+
+> **Không có `/feasibility-assessment` riêng.** `/market-scan` chạy ba luồng song song
+> và sinh **cả hai** artefact: Market Scan Report và Feasibility Assessment.
 
 ### `/discovery-report <slug>`
 Synthesize discovery into a 5-page report ready for G1 feasibility gate.
@@ -140,7 +137,7 @@ Detail requirements into individually testable function list + SRS.
 - **Produces**: Every AC detailed into individually testable requirement; US ids assigned per user story; each item traces to F-NNN / AC-NNN; flat FR-### format; Given/When/Then prose; five named NFR groups (Hiệu suất, Bảo mật, Khả năng mở rộng, Khả dụng, Tuân thủ)
 - **DoD**: 9 items (scope agreed, every requirement testable, every item traces to PRD, all states listed, NFRs carry number + measurement + goal, permissions matrix exists if >1 role, every entity states PII + retention, every integration names system + owner, flows are inline mermaid)
 - **Ordering**: C2 before C3 (UI specs drawn from this list)
-- **Next**: `/ui-spec` (C3 parallel) + `/test-strategy` (C4 parallel) + `/threat-modeling` (C5 parallel)
+- **Next**: `/ui-spec` (C3) + `/test-strategy` (C4) + `/security-review` (C5) — C3 and C4 run in parallel
 
 ### `/ui-spec <slug>`
 Design wireframes → hi-fi Figma frames + design tokens.
@@ -162,16 +159,16 @@ Define test pyramid, coverage thresholds, and QA approach.
 - **DoD**: Coverage thresholds fixed as numbers, enforcement mechanism named; every AC has ≥1 sketched test case
 - **Note**: Set thresholds per project; inherit Stockbook's 80/90 only if you decide that's your standard
 - **Ordering**: C2 before C3; C3 and C4 parallel
-- **Next**: `/threat-modeling` (parallel)
+- **Next**: `/security-review` (C5, parallel)
 
-### `/threat-modeling <slug>`
+### `/security-review <slug>` (C5)
 STRIDE threat model per feature + risk acceptance.
 - **Input**: C1 + C2 (architecture + requirements)
 - **Output**: `docs/specs/<slug>/threat-model.md` (in repo, not Confluence)
 - **Owner runs**: security
 - **Produces**: STRIDE per feature (actor, attack, mitigation, residual risk); security requirement per component; risk acceptance signed
 - **DoD**: Severity on every finding; risk acceptance signed
-- **Uses**: threat-modeling skill (STRIDE framework)
+- **Uses**: the `threat-modeling` skill (STRIDE) — a skill, not a command
 - **Ordering**: C5 draws on C1 + C2 (no dependency on C3/C4)
 - **Next**: `/gate G4`
 
@@ -360,12 +357,12 @@ Bootstrap the harness into a new repo.
   - `project.yml` (config)
   - Phase specification files
 
-### `/project-toolchain`
-Detect and record project toolchain settings.
+### `project-toolchain` (skill, not a slash command)
+Detect and record project toolchain settings. Invoked by other commands, or by name.
 - **Input**: Repo structure
 - **Output**: `docs/ai-sdlc/project.yml`
 - **Detects**: Build system, test framework, linting, deployment, VCS host, CI platform
-- **Uses**: `project-toolchain` agent
+- **Note**: it is a skill; there is no `/project-toolchain` command
 
 ---
 
