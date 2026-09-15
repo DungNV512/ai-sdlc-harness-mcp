@@ -7,6 +7,9 @@ version control for everything upstream.
 
 Owners: **FS 20 Architect** · **FS 19 PX** · **FS 22 QE** · **FS 14 AppSec**.
 
+For the command sequence rather than the specification, see
+`docs/ai-sdlc/cookbook.md`.
+
 ## The ordering is a hard dependency, not a preference
 
 ```

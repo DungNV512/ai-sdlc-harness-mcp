@@ -197,7 +197,8 @@ to guess what it was handed. Write all of these, each only if missing (or with
   per-feature.** It is standing background with one named owner and a review
   cadence, and every Stage A and Stage B prompt reads it. Without it the
   analysis is about a generic company rather than this one. Say in the report
-  that it needs an owner assigned before `/idea-card` is useful.
+  that it needs an owner assigned before `/idea-card` is useful, and point at
+  `docs/ai-sdlc/cookbook.md` for what to run next.
 - `docs/ai-sdlc/company-context.md` — **the instance, not the template**,
   only if missing. Every Stage A/B command reads this exact path (never the
   template path) — `/idea-card`, `/problem-canvas`, `/market-scan`,
@@ -299,6 +300,12 @@ to guess what it was handed. Write all of these, each only if missing (or with
   do-not-edit banner. A hand-edited read-only render raises
   `drift: upstream_edited` and blocks.
   ```
+- `docs/ai-sdlc/cookbook.md` — the command sequences for real work: the full
+  A→G4 path, the short path for a bug fix entering at Phase 0, and the
+  recipes for a gate returning NEED-DATA, a rule changing after sign-off, and
+  a role turning up that the PRD never named. Point the user at this file in
+  the final report — the stage specs say what a phase is, and this says what
+  to type.
 - `docs/ai-sdlc/check-conventions.py` — the mechanical check for everything
   above (C-1, C-2, schema-version consistency, template↔command references).
   Copy it in and tell the user to run it before any commit touching

@@ -11,6 +11,9 @@ It is building the right-looking feature for a problem nobody actually has.
 Every DoD below is written to catch that failure early, while it still costs a
 working session instead of a quarter.
 
+For the command sequence rather than the specification, see
+`docs/ai-sdlc/cookbook.md`.
+
 **Where the rest of the framework lives.** Stage B (Define) is specified in
 `stage-b-definition.md` and Stage C (Design) in `stage-c-design.md`, each with its own gates.
 Stages P, D, E, F and O are the delivery half — see `phases.md`.

@@ -7,6 +7,9 @@ where teams most often cut corners.
 
 Owner: **FS 18 PM**, co-owner **FS 20 Architect**.
 
+For the command sequence rather than the specification, see
+`docs/ai-sdlc/cookbook.md`.
+
 Every artefact in this stage obeys `docs/ai-sdlc/document-conventions.md` —
 the house rules derived from the organisation's own shipped documents: an
 identity block, a version-history changelog, permanent ids declared in the
