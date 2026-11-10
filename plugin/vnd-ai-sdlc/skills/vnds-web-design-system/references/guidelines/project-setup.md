@@ -30,14 +30,14 @@ The design system is **shared across all new VND web projects**. This file cover
 
 ### Make the skill available to the whole team
 
-Commit `.claude/settings.json` in the project repo, so that Claude Code offers to install this skill's plugin to everyone who opens the repo. Merge it into the existing file if there is one. ⚠️ The plugin name `vnd-ai-sdlc-web` is provisional.
+Commit `.claude/settings.json` in the project repo, so that Claude Code offers to install this skill's plugin to everyone who opens the repo. Merge it into the existing file if there is one. The skill ships in the `vnd-ai-sdlc` plugin.
 
 ```json
 {
   "extraKnownMarketplaces": {
     "ai-sdlc-harness-mcp": { "source": { "source": "github", "repo": "DungNV512/ai-sdlc-harness-mcp" } }
   },
-  "enabledPlugins": { "vnd-ai-sdlc-web@ai-sdlc-harness-mcp": true }
+  "enabledPlugins": { "vnd-ai-sdlc@ai-sdlc-harness-mcp": true }
 }
 ```
 
